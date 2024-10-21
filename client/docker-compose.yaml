@@ -1,0 +1,18 @@
+
+services:
+  kvirc:
+    build: kvirc
+    volumes:
+      - /tmp/.X11-unix/:/tmp/.X11-unix/
+    environment: 
+      - DISPLAY=${DISPLAY}
+    networks:
+      - net1
+    # entrypoint: /bin/bash
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    # command: /usr/bin/bash
+
+networks:
+  net1:
+    driver: bridge
