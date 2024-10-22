@@ -6,12 +6,13 @@ services:
       - /tmp/.X11-unix/:/tmp/.X11-unix/
     environment: 
       - DISPLAY=${DISPLAY}
-    networks:
-      - net1
+    network_mode: host
+    # networks:
+    #   - net1
     # entrypoint: /bin/bash
     # stdin_open: true # docker run -i
     # tty: true        # docker run -t
 
-networks:
-  net1:
-    driver: bridge
+# networks:
+#   net1:
+#     driver: host

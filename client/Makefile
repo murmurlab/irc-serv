@@ -1,6 +1,8 @@
 all: up
 up: setup
 	sudo docker compose up kvirc
+down:
+	sudo docker compose down kvirc
 setup:
 	xhost + local:
 

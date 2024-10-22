@@ -4,11 +4,12 @@ LXXFLAGS		=
 RUNFLAGS		=
 
 EXE_DIR			= 
+ROOT			= irc-serv/
 NAME			= ircserv
-LIB				= lib
-CMD_DIR			= cmd
-SRC_DIR			= src
-INC_DIR			= inc
+LIB				= $(ROOT)/lib
+CMD_DIR			= $(ROOT)/cmd
+SRC_DIR			= $(ROOT)/src
+INC_DIR			= $(ROOT)/inc
 OBJ_DIR			= .
 SRCS			= 	$(CMD_DIR)/$(NAME).cpp \
 					$(wildcard $(SRC_DIR)/*.cpp)
