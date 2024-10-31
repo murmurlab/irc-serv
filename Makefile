@@ -6,17 +6,19 @@ RUNFLAGS		=
 EXE_DIR			= 
 ROOT			= irc-serv/
 NAME			= ircserv
+TEST			= irctest
 LIB				= $(ROOT)/lib
 CMD_DIR			= $(ROOT)/cmd
 SRC_DIR			= $(ROOT)/src
 INC_DIR			= $(ROOT)/inc
 OBJ_DIR			= .
-SRCS			= 	$(CMD_DIR)/$(NAME).cpp \
-					$(wildcard $(SRC_DIR)/*.cpp)
+SRCS			= $(wildcard $(SRC_DIR)/*.cpp)
 OBJS			= $(SRCS:%.cpp=%.o)
+CMD_IRCSERV		= $(CMD_DIR)/$(NAME).o
+CMD_IRCTEST		= $(CMD_DIR)/$(TEST).o
 DEPENDENCIES	=
 
-CXXFLAGS        = -std=c++98 -pedantic -I $(INC_DIR)
+CXXFLAGS        = -Wc99-designator -std=c++98 -pedantic -I $(INC_DIR)
 
 os =  ${shell uname -s}
 ifeq '$(os)' 'Darwin'
@@ -53,15 +55,17 @@ endif
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@
 all: $(DEPENDENCIES)
-	@$(MAKE) $(NAME)
-$(NAME): $(OBJS)
-	$(CC) $(LXXFLAGS) $(OBJS) -o $(NAME)
+	@$(MAKE) $(NAME) $(TEST)
+$(NAME): $(OBJS) $(CMD_IRCSERV)
+	$(CC) $(LXXFLAGS) $(CMD_IRCSERV) $(OBJS) -o $(NAME)
+$(TEST): $(OBJS) $(CMD_IRCTEST)
+	$(CC) $(LXXFLAGS) $(CMD_IRCTEST) $(OBJS) -o $(TEST)
 run: re
 	$(RUNFLAGS) ./$(NAME) $(args)
 clean:
-	@$(RM) $(OBJS) $(B_OBJ)
+	$(RM) $(OBJS) $(B_OBJ)
 fclean: clean
-	@$(RM) $(NAME) & wait
+	$(RM) $(NAME) $(TEST) & wait
 re: fclean
 	$(MAKE) all
 .PHONY: all clean fclean re run

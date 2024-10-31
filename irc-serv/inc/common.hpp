@@ -35,6 +35,7 @@ using std::size_t;
 using std::exception;
 using std::cout;
 using std::cerr;
+using ::perror;
 using std::string;
 using std::endl;
 
