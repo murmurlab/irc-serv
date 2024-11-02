@@ -7,7 +7,7 @@ int create_socket() {
 	socklen_t			sout_len;
 	int					sd;
 	sock.sin_family = PF_INET;
-	sock.sin_port = 4444;
+	sock.sin_port = 4445;
 	sock.sin_addr.s_addr = *(int *)"\x7f\x00\x00\x01";
 	// IPv4(127, 0, 0, 1)
 	// cout << inet_addr("127.0.0.1") << endl;
@@ -18,11 +18,11 @@ int create_socket() {
 		return perror("socket()"), -1;
 	// if (bind(sd, (sockaddr *)&sock, sizeof(sock)))
 	// 	return perror("bind()"), -1;
-	if (connect(sd, (sockaddr *)&sock, sizeof(sock)) == -1)
+	if (connect(sd, (sockaddr *)&sock, sizeof(struct sockaddr_in)) == -1)
 		return perror("connect()"), -1;
 	cout << "connect succesfully" << endl;
 	// pause();
-	for (string line; std::getline(std::cin, line);) {
+	for (string line; ; std::getline(std::cin, line)) {
 		dprintf(sd, "%s\n", line.c_str());
 	}
 	// if (listen(sd, SOMAXCONN) == -1)

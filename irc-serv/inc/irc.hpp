@@ -9,6 +9,7 @@
 # include <netdb.h>
 # include <errno.h>
 # include <unistd.h>
+# include <cstring>
 # include <string>
 
 # define IPv4(a, b, c, d) (a << 0 | b << 8 | c << 16 | d << 24)
