@@ -11,11 +11,13 @@ LIB				= $(ROOT)/lib
 CMD_DIR			= $(ROOT)/cmd
 SRC_DIR			= $(ROOT)/src
 INC_DIR			= $(ROOT)/inc
+INCS			= $(wildcard $(INC_DIR)/*.hpp) $(wildcard $(INC_DIR)/*.h)
 OBJ_DIR			= .
 SRCS			= $(wildcard $(SRC_DIR)/*.cpp)
 OBJS			= $(SRCS:%.cpp=%.o)
 CMD_IRCSERV		= $(CMD_DIR)/$(NAME).o
 CMD_IRCTEST		= $(CMD_DIR)/$(TEST).o
+CMDS			= $(CMD_IRCSERV) $(CMD_IRCTEST)
 DEPENDENCIES	=
 
 CXXFLAGS        = -Wc99-designator -std=c++98 -pedantic -I $(INC_DIR)
@@ -27,7 +29,7 @@ else ifeq '$(os)' 'Linux'
 NPROCS  = $(shell nproc)
 endif
 # MAKEFLAGS += -j$(NPROCS)
-gnu = 0
+gnu = 1
 ifeq '$(gnu)' '1'
 CXXFLAGS += $(stdcxx_cxxflags)
 LXXFLAGS += $(stdcxx_lxxflags)
@@ -56,14 +58,18 @@ endif
 	$(CC) $(CXXFLAGS) -c $< -o $@
 all: $(DEPENDENCIES)
 	@$(MAKE) $(NAME) $(TEST)
-$(NAME): $(OBJS) $(CMD_IRCSERV)
+$(NAME): $(OBJS) $(CMD_IRCSERV) $(INCS)
 	$(CC) $(LXXFLAGS) $(CMD_IRCSERV) $(OBJS) -o $(NAME)
-$(TEST): $(OBJS) $(CMD_IRCTEST)
+$(TEST): $(OBJS) $(CMD_IRCTEST) $(INCS)
 	$(CC) $(LXXFLAGS) $(CMD_IRCTEST) $(OBJS) -o $(TEST)
-run: re
+run: all
 	$(RUNFLAGS) ./$(NAME) $(args)
+test: all
+	$(RUNFLAGS) ./$(TEST) $(args)
+down:
+	lsof -c ircserv -sTCP:LISTEN | grep 'IPv4' |  awk '{print $2}' | xargs -I @ kill -9 @
 clean:
-	$(RM) $(OBJS) $(B_OBJ)
+	$(RM) $(OBJS) $(B_OBJ) $(CMDS)
 fclean: clean
 	$(RM) $(NAME) $(TEST) & wait
 re: fclean

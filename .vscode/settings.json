@@ -52,6 +52,8 @@
 		"streambuf": "cpp",
 		"text_encoding": "cpp",
 		"variant": "cpp",
-		"cstring": "cpp"
+		"cstring": "cpp",
+		"cerrno": "cpp",
+		"csignal": "cpp"
 	}
 }

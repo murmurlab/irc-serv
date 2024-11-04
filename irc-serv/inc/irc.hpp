@@ -11,8 +11,13 @@
 # include <unistd.h>
 # include <cstring>
 # include <string>
+# include <csignal>
+# include <cstdlib>
 
 # define IPv4(a, b, c, d) (a << 0 | b << 8 | c << 16 | d << 24)
+
+# define BUF_LEN	8
+# define PORT_NUM	4445
 
 typedef union	u_ipv4 {
 	struct in_addr	s_addr;
