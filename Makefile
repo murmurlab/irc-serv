@@ -67,7 +67,7 @@ run: all
 test: all
 	$(RUNFLAGS) ./$(TEST) $(args)
 down:
-	lsof -c ircserv -sTCP:LISTEN | grep 'IPv4' |  awk '{print $2}' | xargs -I @ kill -9 @
+	lsof -c ircserv -sTCP:LISTEN | grep 'IPv4' |  awk '{print $$2}' | xargs -I @ kill -9 @
 clean:
 	$(RM) $(OBJS) $(B_OBJ) $(CMDS)
 fclean: clean

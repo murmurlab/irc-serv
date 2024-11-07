@@ -24,6 +24,7 @@
 # include <iostream>
 # include <exception>
 # include <typeinfo>
+# include <string>
 // # include <cstring>
 // # include <cstdlib>
 // # include <cstddef>
