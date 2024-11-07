@@ -14,9 +14,13 @@
 # include <csignal>
 # include <cstdlib>
 
+
+# include <pthread.h>
+# include <sys/syscall.h>
+
 # define IPv4(a, b, c, d) (a << 0 | b << 8 | c << 16 | d << 24)
 
-# define BUF_LEN	10
+# define BUF_LEN	512
 # define PORT_NUM	4445
 
 typedef union	u_ipv4 {

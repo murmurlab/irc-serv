@@ -20,6 +20,7 @@ string get_line_segment(int des) {
 		if (res_len == -1)
 			throw runtime_error("read(): -1");
 		ab[1] = std::strchr(ab[0], '\n');
+		// cout << (void *)ab[1] << endl;
 		if (ab[1])
 			break ;
 		if (ab[0] == buff)
@@ -112,6 +113,23 @@ void	receive_data(int csd) {
 	// }
 }
 
+void	*stdin_loop(void *csd) {
+	string line;
+	
+	while (1) {
+		getline(std::cin, line);
+		cout << "readed: " << line << endl;
+		write(*(int *)csd, line.c_str(), line.length());
+	}
+}
+
+void	test_input(int csd) {
+	pthread_t th1;
+	pthread_create(&th1, NULL, stdin_loop, &csd);
+		cout << "join: " << endl;
+	// pthread_join(th1, NULL);
+}
+
 void	create_socket() {
 	const static size_t P_IP =	getprotobyname("ip")->p_proto; // use tcp
 	struct sockaddr_in	sin = { };
@@ -140,6 +158,7 @@ void	create_socket() {
 		throw runtime_error("accept(): " + string(strerror(errno)));
 	cout << "an accept" << endl <<
 		"\tip: " << inet_ntoa(sout.sin_addr) << endl;
+	test_input(csd);
 	receive_data(csd);
 	// if (errno)
 	// 	perror("accept()");

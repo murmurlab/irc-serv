@@ -11,7 +11,7 @@ LIB				= $(ROOT)/lib
 CMD_DIR			= $(ROOT)/cmd
 SRC_DIR			= $(ROOT)/src
 INC_DIR			= $(ROOT)/inc
-INCS			= $(wildcard $(INC_DIR)/*.hpp) $(wildcard $(INC_DIR)/*.h)
+INCS			= $(wildcard $(INC_DIR)/*.tpp) $(wildcard $(INC_DIR)/*.hpp) $(wildcard $(INC_DIR)/*.h)
 OBJ_DIR			= .
 SRCS			= $(wildcard $(SRC_DIR)/*.cpp)
 OBJS			= $(SRCS:%.cpp=%.o)

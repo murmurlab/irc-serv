@@ -7,6 +7,79 @@ void	socket_dispose(int sig) {
 	std::exit(0);
 }
 
+string get_line_segment(int des) {
+	static char		buff[BUF_LEN] = { };
+	static size_t	req_len = BUF_LEN - 1;
+	static size_t	res_len = read(des, buff, req_len);
+	static char		*(ab[2]) = {buff, 0};
+	string			seg;
+
+	for (; true;) {
+		if (res_len == -1)
+			throw runtime_error("read(): -1");
+		ab[1] = std::strchr(ab[0], '\n');
+		// cout << (void *)ab[1] << endl;
+		if (ab[1])
+			break ;
+		if (ab[0] == buff)
+			throw runtime_error("non-nl");
+		if (res_len < req_len) {
+			bzero(buff, BUF_LEN);
+			req_len = BUF_LEN - 1;
+			res_len = read(des, buff, req_len);
+		} else {
+			// cout << "before1: " << ab[0] << endl;
+			// cout << "before1: " << buff << endl;
+			strlcpy(buff, ab[0], (BUF_LEN - 1) - (ab[0] - buff) + 1);
+			// cout << "before2: " << buff << endl;
+			bzero(buff + ((BUF_LEN - 1) - (ab[0] - buff)), (ab[0] - buff));
+			// cout << "before3: " << buff << endl;
+			req_len = BUF_LEN - ((BUF_LEN - 1) - (ab[0] - buff)) - 1;
+			res_len = read(des, buff + ((BUF_LEN - 1) - (ab[0] - buff)), req_len);
+			// cout << "readed: " << buff << endl;
+		}
+		ab[0] = buff;
+		continue ;
+
+	}
+	seg = string(ab[0], (ab[1] - ab[0]) + 1);
+	ab[0] = ab[1] + 1;
+	return seg;
+}
+
+void	receive_data(int csd) {
+	string rec;
+	
+	while (2) {
+		// sleep(1);
+		rec = get_line_segment(csd);
+		cout << "" << rec;
+		// getchar();
+	}
+	
+	// size_t				size;
+	// // sleep(7);
+	// for (char buff[BUF_LEN] = {}; true; ) {
+	// 	lseek(csd, 0, SEEK_SET);
+	// 	if ((size = read(csd, buff, sizeof(buff) - 1)) == -1)
+	// 		throw runtime_error("read(): " + string(strerror(errno)));
+	// 	cout << buff;
+	// 	// cout << "byte: " << size << " data: " << buff << endl;
+	// 	bzero(buff, BUF_LEN);
+	// }
+}
+
+void	*stdout_loop(void *csd) {
+	receive_data(*(int *)csd);
+	return NULL;
+}
+
+void	test_out(int csd) {
+	pthread_t th1;
+	pthread_create(&th1, NULL, stdout_loop, &csd);
+	// pthread_join(th1, NULL);
+}
+
 int create_socket(in_addr_t addr, in_port_t port) {
 	const static size_t P_IP =	getprotobyname("ip")->p_proto; // use tcp
 	struct sockaddr_in	sock = { };
@@ -29,6 +102,7 @@ int create_socket(in_addr_t addr, in_port_t port) {
 		return perror("connect()"), -1;
 	cout << "connect succesfully" << endl;
 	// pause();
+	test_out(sd);
 	for (string line; std::getline(std::cin, line); ) {
 		// write(sd, line.c_str(), line.length());
 		// cout << " arst " << endl;
