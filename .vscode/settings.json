@@ -54,6 +54,7 @@
 		"variant": "cpp",
 		"cstring": "cpp",
 		"cerrno": "cpp",
-		"csignal": "cpp"
+		"csignal": "cpp",
+		"sstream": "cpp"
 	}
 }

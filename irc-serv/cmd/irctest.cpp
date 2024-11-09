@@ -18,7 +18,8 @@ string get_line_segment(int des) {
 		if (res_len == -1)
 			throw runtime_error("read(): -1");
 		ab[1] = std::strchr(ab[0], '\n');
-		// cout << (void *)ab[1] << endl;
+		// cout << buff << endl;
+		// cout << "nl: " << (void *)ab[1] << endl;
 		if (ab[1])
 			break ;
 		if (ab[0] == buff)
@@ -53,7 +54,7 @@ void	receive_data(int csd) {
 	while (2) {
 		// sleep(1);
 		rec = get_line_segment(csd);
-		cout << "" << rec;
+		cout << "> " << rec;
 		// getchar();
 	}
 	
@@ -76,7 +77,8 @@ void	*stdout_loop(void *csd) {
 
 void	test_out(int csd) {
 	pthread_t th1;
-	pthread_create(&th1, NULL, stdout_loop, &csd);
+	int *a = new int(csd);
+	pthread_create(&th1, NULL, stdout_loop, a);
 	// pthread_join(th1, NULL);
 }
 
@@ -103,10 +105,12 @@ int create_socket(in_addr_t addr, in_port_t port) {
 	cout << "connect succesfully" << endl;
 	// pause();
 	test_out(sd);
+	// cout << "> ";
 	for (string line; std::getline(std::cin, line); ) {
 		// write(sd, line.c_str(), line.length());
 		// cout << " arst " << endl;
 		dprintf(sd, "%s\n", line.c_str());
+		// cout << "> ";
 	}
 	// if (listen(sd, SOMAXCONN) == -1)
 	// 	return perror("listen()"), -1;

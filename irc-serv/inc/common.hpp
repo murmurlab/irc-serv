@@ -29,7 +29,6 @@
 // # include <cstdlib>
 // # include <cstddef>
 
-
 using std::runtime_error;
 using std::bad_alloc;
 using std::size_t;

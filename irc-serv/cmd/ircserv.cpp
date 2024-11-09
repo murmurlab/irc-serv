@@ -2,13 +2,24 @@
 #include "irc.hpp"
 
 // static int	sd = 0;
+int					sd;
+int					csd;
+
 
 void	socket_dispose(int sig) {
 	cout << "socket_dispose()" << endl;
-	// close(sd);
+	close(sd);
+	close(csd);
 	std::exit(0);
 }
 
+
+// todo: to avoid passing a variadic-size value to read-size argument in read(),
+// give constant-size argument to read-size argument, In this case it will read
+// constant-size byte and will store in the buff1 and if nl is not exist when
+// checked nl in buff1 then part of buff1 that not contains nl is stored in
+// buff2 then read again and store to buff1. Finally, concatenate buff2 with up
+// to the nl part of buff1. buff2 must be read-size bytes in size.
 string get_line_segment(int des) {
 	static char		buff[BUF_LEN] = { };
 	static size_t	req_len = BUF_LEN - 1;
@@ -49,55 +60,52 @@ string get_line_segment(int des) {
 	return seg;
 }
 
-// char	*get_line_segment(int des) {
-// 	static char		buff[BUF_LEN] = { };
-// 	static size_t	req_len = BUF_LEN - 1;
-// 	static size_t	res_len = read(des, buff, req_len);
-// 	static char		*(ab[2]) = {buff, 0};
-// 	char			*seg;
+void	parse_prefix() {
 
-// 	for (; true;) {
-// 		if (res_len == -1)
-// 			throw runtime_error("read(): -1");
-// 		ab[1] = std::strchr(ab[0], '\n');
-// 		if (ab[1])
-// 			break ;
-// 		if (ab[0] == buff)
-// 			throw runtime_error("non-nl");
-// 		if (res_len < req_len) {
-// 			bzero(buff, BUF_LEN);
-// 			req_len = BUF_LEN - 1;
-// 			res_len = read(des, buff, req_len);
-// 		} else {
-// 			// cout << "before1: " << ab[0] << endl;
-// 			// cout << "before1: " << buff << endl;
-// 			strlcpy(buff, ab[0], (BUF_LEN - 1) - (ab[0] - buff) + 1);
-// 			// cout << "before2: " << buff << endl;
-// 			bzero(buff + ((BUF_LEN - 1) - (ab[0] - buff)), (ab[0] - buff));
-// 			// cout << "before3: " << buff << endl;
-// 			req_len = BUF_LEN - ((BUF_LEN - 1) - (ab[0] - buff)) - 1;
-// 			res_len = read(des, buff + ((BUF_LEN - 1) - (ab[0] - buff)), req_len);
-// 			// cout << "readed: " << buff << endl;
-// 		}
-
-// 		ab[0] = buff;
-// 		continue ;
-
-// 	}
-// 	seg = (char *)std::calloc((ab[1] - ab[0]) + 1, 1);
-// 	std::memcpy(seg, ab[0], (ab[1] - ab[0]) + 1);
-// 	ab[0] = ab[1] + 1;
-// 	return seg;
-// }
-
+}
+void	parse_command() {
+	
+}
+void	parse_params() {
+	
+}
+void	parse_unknown() {
+	
+}
 
 void	receive_data(int csd) {
-	string rec;
-	
+	string				line;
+	std::stringstream	ss;
+	string				component;
+	string				trailing;
+	int					sel_parser;
+
 	while (2) {
 		// sleep(1);
-		rec = get_line_segment(csd);
-		cout << "" << rec;
+		line = get_line_segment(csd);
+		cout << "> " << line;
+
+// 		ss.str(line);
+// 		cout << "str: " << ss.str();
+// 		ss >> component;
+// 		cout << "component: " << component << endl;
+// 		cout << "rdbuf: " << ss.rdbuf();
+// 		// cout << "rdbuf all: " << ss.rdbuf();
+// 		std::getline(ss.rdbuf(), trailing);
+// 		cout << "trailing; " << trailing << endl;
+// 		sel_parser = (ss.rdbuf()->sgetc() == ':') ? 0 : 1;
+// 		continue ;
+// 		while (1) {
+// // (ss.rdbuf()->sgetc() == ':')
+// 			switch (sel_parser) {
+// 			case 0: parse_prefix(); sel_parser++;
+// 			case 1: parse_command(); sel_parser++;
+// 			case 2: parse_params();
+// 			default: parse_unknown(); break;
+// 			}
+// 		}
+		// if (rec == S_Q_CAP_LS)
+		// 	write(*(int *)csd, S_A_CAP_LS, sizeof(S_A_CAP_LS));
 		// getchar();
 	}
 	
@@ -117,16 +125,19 @@ void	*stdin_loop(void *csd) {
 	string line;
 	
 	while (1) {
+		// cout << "> ";
 		getline(std::cin, line);
-		cout << "readed: " << line << endl;
+		line += "\r\n";
+		// cout << "readed: " << line << endl;
 		write(*(int *)csd, line.c_str(), line.length());
 	}
 }
 
 void	test_input(int csd) {
 	pthread_t th1;
-	pthread_create(&th1, NULL, stdin_loop, &csd);
-		cout << "join: " << endl;
+	int *a = new int(csd);
+	pthread_create(&th1, NULL, stdin_loop, a);
+		// cout << "join: " << endl;
 	// pthread_join(th1, NULL);
 }
 
@@ -135,8 +146,6 @@ void	create_socket() {
 	struct sockaddr_in	sin = { };
 	struct sockaddr_in	sout = { };
 	socklen_t			sout_len;
-	int					sd;
-	int					csd;
 	sin.sin_family = PF_INET;
 	sin.sin_port = htons(4445);
 	sin.sin_addr.s_addr = *(int *)"\x7f\x00\x00\x01";
@@ -159,7 +168,12 @@ void	create_socket() {
 	cout << "an accept" << endl <<
 		"\tip: " << inet_ntoa(sout.sin_addr) << endl;
 	test_input(csd);
-	receive_data(csd);
+	try {
+		receive_data(csd);
+	} catch (runtime_error& e) {
+		socket_dispose(0);
+	}
+	
 	// if (errno)
 	// 	perror("accept()");
 	// errno = 0;
@@ -169,6 +183,12 @@ void	create_socket() {
 int main(int argc, char const *argv[]) try {
 	// if (argc != 3)
 	// 	throw (runtime_error(E_ARG));
+	// t_irc	irc = {
+	// 	.s_q_matcher = {
+	// 		[Q_CAP_LS_302] = S_Q_CAP_LS_302,
+
+	// 	}
+	// };
 	create_socket();
 	return 0;
 } catch (exception& e) {
