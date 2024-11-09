@@ -9,7 +9,7 @@ NAME			= ircserv
 TEST			= irctest
 LIB				= $(ROOT)/lib
 CMD_DIR			= $(ROOT)/cmd
-SRC_DIR			= $(ROOT)/src
+SRC_DIR			= $(ROOT)/
 INC_DIR			= $(ROOT)/inc
 INCS			= $(wildcard $(INC_DIR)/*.tpp) $(wildcard $(INC_DIR)/*.hpp) $(wildcard $(INC_DIR)/*.h)
 OBJ_DIR			= .
@@ -57,7 +57,7 @@ endif
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@
 all: $(DEPENDENCIES)
-	@$(MAKE) $(NAME) $(TEST)
+	@$(MAKE) $(NAME) #$(TEST)
 $(NAME): $(OBJS) $(CMD_IRCSERV) $(INCS)
 	$(CC) $(LXXFLAGS) $(CMD_IRCSERV) $(OBJS) -o $(NAME)
 $(TEST): $(OBJS) $(CMD_IRCTEST) $(INCS)

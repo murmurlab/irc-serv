@@ -1,22 +1,20 @@
-#ifndef SERVER_HPP
-# define SERVER_HPP
+#ifndef CLIENT_HPP
+# define CLIENT_HPP
 
 #include "common.hpp"
 #include "irc.hpp"
 
-class Server
+class Client
 {
 	private:
 		int sd;
-		int csd;
 		const static size_t P_IP;
 		struct sockaddr_in	sock;
 		socklen_t			sout_len;
 	public:
-		Server(string addr, short port);
-		~Server();
-		int		create_socket(string addr, short port);
+		Client(in_addr_t addr, in_port_t port);
+		~Client();
 		void	socket_dispose(int sig);
 };
 
-#endif // SERVER_HPP
+#endif // CLIENT_HPP
