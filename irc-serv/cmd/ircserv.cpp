@@ -80,30 +80,50 @@ void	receive_data(int csd) {
 	string				trailing;
 	int					sel_parser;
 
+	sel_parser = 0;
 	while (2) {
 		// sleep(1);
+		// component.clear();
+		// ss.clear();
+		// (ss.rdbuf()->sgetc() == ':')
 		line = get_line_segment(csd);
 		cout << "> " << line;
 
-// 		ss.str(line);
-// 		cout << "str: " << ss.str();
-// 		ss >> component;
-// 		cout << "component: " << component << endl;
-// 		cout << "rdbuf: " << ss.rdbuf();
-// 		// cout << "rdbuf all: " << ss.rdbuf();
-// 		std::getline(ss.rdbuf(), trailing);
-// 		cout << "trailing; " << trailing << endl;
-// 		sel_parser = (ss.rdbuf()->sgetc() == ':') ? 0 : 1;
-// 		continue ;
-// 		while (1) {
-// // (ss.rdbuf()->sgetc() == ':')
-// 			switch (sel_parser) {
-// 			case 0: parse_prefix(); sel_parser++;
-// 			case 1: parse_command(); sel_parser++;
-// 			case 2: parse_params();
-// 			default: parse_unknown(); break;
-// 			}
-// 		}
+		ss.str(line);
+		cout << "str: " << ss.str();
+		// std::getline(ss, component, ' ');
+		// ss >> component;
+		// cout << "component: " << component << endl;
+		// cout << "rdbuf: " << ss.rdbuf()->str();
+		// cout << "rdbuf: " << ss.rdbuf()->str();
+		// cout << "rdbuf: " << ss.rdbuf();
+		// cout << "rdbuf all: " << ss.rdbuf();
+		// std::getline(ss, trailing);
+		// cout << "trailing; " << trailing << endl;
+		// cout << "rdbuf: " << ss.rdbuf(); 
+		// sel_parser = (component.at(0) == ':') ? 0 : 1;
+		continue ;
+		while (3) {
+			switch (sel_parser) {
+			case 0, 1:
+				ss >> component;
+			case 0:
+				sel_parser = (component.at(0) == ':') ? 0 : 1;
+			case 2:
+				if (ss.rdbuf()->sgetc() == ':')
+					std::getline(ss, trailing); break;
+				else
+					ss >> component;
+			case 0:
+				parse_prefix(); sel_parser++; break;
+			case 1:
+				parse_command(); sel_parser++; break;
+			case 2:
+				parse_params();
+			default:
+				parse_unknown(); break;
+			}
+		}
 		// if (rec == S_Q_CAP_LS)
 		// 	write(*(int *)csd, S_A_CAP_LS, sizeof(S_A_CAP_LS));
 		// getchar();
