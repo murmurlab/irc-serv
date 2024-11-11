@@ -55,6 +55,8 @@
 		"cstring": "cpp",
 		"cerrno": "cpp",
 		"csignal": "cpp",
-		"sstream": "cpp"
-	}
+		"sstream": "cpp",
+		"list": "cpp"
+	},
+	"C_Cpp.codeAnalysis.clangTidy.enabled": false
 }

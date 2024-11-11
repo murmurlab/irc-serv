@@ -21,28 +21,21 @@
 
 
 // #include <sanitizer/lsan_interface.h>
-# include <iostream>
-# include <exception>
-# include <typeinfo>
-# include <string>
-// # include <cstring>
-// # include <cstdlib>
-// # include <cstddef>
 
-using std::runtime_error;
-using std::bad_alloc;
-using std::size_t;
-using std::exception;
-using std::cout;
-using std::cerr;
-using ::perror;
-using std::string;
-using std::endl;
+// using std::runtime_error;
+// using std::bad_alloc;
+// using std::size_t;
+// using std::exception;
+// using std::cout;
+// using std::cerr;
+// using ::perror;
+// using std::string;
+// using std::endl;
 
 # define DEBUG(n) cout << n << ": " << __LINE__ << endl;
 
-template<typename T, size_t N>
-size_t ft_size2(T (&)[N]) { return N; }
+// template<typename T, size_t N>
+// size_t ft_size2(T (&)[N]) { return N; }
 
 // void __attribute__((destructor))after_main()
 // {
