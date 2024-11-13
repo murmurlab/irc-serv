@@ -3,6 +3,7 @@
 #include "Parser.hpp"
 #include <cstddef>
 #include <cstring>
+#include <sys/fcntl.h>
 #include <sys/poll.h>
 
 // static int	sd = 0;
@@ -89,9 +90,10 @@ void	Server::_add_accept() {
 	// test_input(new_Client.desc);
 	if (new_Client.desc == -1)
 		throw runtime_error("accept(): " + string(strerror(errno)));
-	_accepts.push_back(new_Client);
 	new_pollfd.fd = new_Client.desc;
 	new_pollfd.events = POLLRDNORM;
+	fcntl(new_Client.desc, F_SETFL, O_NONBLOCK);
+	_accepts.push_back(new_Client);
 	_vec_pollfd.push_back(new_pollfd);
 	new_Client.~Client();
 	// _update_pollfd();
