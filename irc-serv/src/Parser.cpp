@@ -17,6 +17,8 @@ string get_line_segment(int des) {
 	for (; true;) {
 		if (res_len == -1)
 			throw runtime_error("read(): -1");
+		if (res_len == 0)
+			cout << "read(): 0" << endl;
 		ab[1] = std::strchr(ab[0], '\n');
 		// cout << (void *)ab[1] << endl;
 		if (ab[1])
@@ -36,6 +38,8 @@ string get_line_segment(int des) {
 			// cout << "before3: " << buff << endl;
 			req_len = BUF_LEN - ((BUF_LEN - 1) - (ab[0] - buff)) - 1;
 			res_len = read(des, buff + ((BUF_LEN - 1) - (ab[0] - buff)), req_len);
+			// if (res_len == -1)
+			// 	cerr << "read(): -1"
 			// cout << "readed: " << buff << endl;
 		}
 		ab[0] = buff;
@@ -96,7 +100,8 @@ void Parser::_parse() {
 		cout << "> " << _line;
 
 		_ss.str(_line);
-		cout << "str: " << _ss.str();
+		// cout << "str: " << _ss.str();
+
 		// std::getline(ss, component, ' ');
 		// ss >> component;
 		// cout << "component: " << component << endl;

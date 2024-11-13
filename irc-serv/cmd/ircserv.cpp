@@ -10,7 +10,7 @@ int main(int argc, char const *argv[]) try {
 
 	// 	}
 	// };
-	Server	s1("127.0.0.1", 4445);
+	Server	s1("10.11.8.7", 4445);
 	// create_socket();
 	return 0;
 } catch (exception& e) {

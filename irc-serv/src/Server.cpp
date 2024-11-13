@@ -1,5 +1,9 @@
 #include "Server.hpp"
+#include "Client.hpp"
 #include "Parser.hpp"
+#include <cstddef>
+#include <cstring>
+#include <sys/poll.h>
 
 // static int	sd = 0;
 // int					sd;
@@ -34,49 +38,86 @@ static void	test_input(int csd) {
 
 void	Server::_listen(in_addr_t host, in_port_t port) {
 	const static size_t P_IP =	getprotobyname("ip")->p_proto; // use tcp
-	std::memset(&_listen_addr_in, 0, sizeof(_listen_addr_in));
+	struct pollfd		new_pollfd;
+	
+	std::memset(&_listen_addr, 0, sizeof(_listen_addr));
 	// std::memset(&_active, 0, sizeof(_active));
-	_listen_addr_in.sin_family = PF_INET;
-	_listen_addr_in.sin_port = port;
-	_listen_addr_in.sin_addr.s_addr = host;
-	// _listen_addr_in.sin_addr.s_addr = *(int *)"\x7f\x00\x00\x01";
+	_listen_addr.sin_family = PF_INET;
+	_listen_addr.sin_port = port;
+	_listen_addr.sin_addr.s_addr = host;
+	// _listen_addr.sin_addr.s_addr = *(int *)"\x7f\x00\x00\x01";
 	// IPv4(127, 0, 0, 1)
 	// cout << inet_addr("127.0.0.1") << endl;
-	// cout << _listen_addr_in.sin_addr.s_addr << endl;
+	// cout << _listen_addr.sin_addr.s_addr << endl;
 
 	std::signal(SIGINT, server_sigint);
-	if ((_listen_sd = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) == -1)
+	if ((_listen_desc = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) == -1)
 		throw runtime_error("socket(): " + string(strerror(errno)));
 	// cout << sd << endl;
-	if (bind(_listen_sd, (sockaddr *)&_listen_addr_in, sizeof(_listen_addr_in)) == -1)
+	if (bind(_listen_desc, (sockaddr *)&_listen_addr, sizeof(_listen_addr)) == -1)
 		throw runtime_error("bind(): " + string(strerror(errno)));
-	cout << "bind: " << inet_ntoa(_listen_addr_in.sin_addr) << endl;
-	if (listen(_listen_sd, SOMAXCONN) == -1)
+	cout << "bind: " << inet_ntoa(_listen_addr.sin_addr) << endl;
+	if (listen(_listen_desc, SOMAXCONN) == -1)
 		throw runtime_error("listen(): " + string(strerror(errno)));
-	cout << "listen: " << _listen_sd << endl;
+	cout << "listen: " << _listen_desc << endl;
+	new_pollfd.fd = _listen_desc;
+	new_pollfd.events = POLLRDNORM;
+	new_pollfd.revents = 0;
+	_vec_pollfd.push_back(new_pollfd);
 }
 
-Server::Server(string host, t_port port) {
-	_listen(inet_addr("127.0.0.1"), htons(port));
+void	Server::_update_pollfd() {
+	// struct pollfd				*tmp_pollfd;
+	// std::vector<struct pollfd>	vec_pollfd;
 
-	std::memset(&_accept_sock, 0, sizeof(_accept_sock));
-	if ((_accept_sock.sd = accept(_listen_sd, (sockaddr *)&_accept_sock.addr, &_accept_sock.len)) == -1)
-		throw runtime_error("accept(): " + string(strerror(errno)));
+	// tmp_pollfd = new struct pollfd[_poll_len + 1];
+	// std::memset(tmp_pollfd, 0, sizeof(struct pollfd) * _poll_len + 1);
+	// std::memcpy(tmp_pollfd, _poll, sizeof(struct pollfd) * _poll_len);
+	// delete [] _poll;
+	// _poll = tmp_pollfd;
+}
 
-	cout << "an accept" << endl <<
-		"\tip: " << inet_ntoa(_accept_sock.addr.sin_addr) << endl;
-	test_input(_accept_sock.sd);
-	try {
-		Parser	p1(_accept_sock.sd);
-	} catch (runtime_error& e) {
-		server_sigint(0);
-	}
+void	Server::_add_accept() {
+	Client			new_Client;
+	struct pollfd	new_pollfd;
 	
+	new_Client.desc = accept(
+			_listen_desc, (sockaddr *)&new_Client.addr, &new_Client.len
+		);
+	cout	<< "[LISTENER] " << "POLLRDNORM " 
+			<< inet_ntoa(new_Client.addr.sin_addr) << endl;
+	// test_input(new_Client.desc);
+	if (new_Client.desc == -1)
+		throw runtime_error("accept(): " + string(strerror(errno)));
+	_accepts.push_back(new_Client);
+	new_pollfd.fd = new_Client.desc;
+	new_pollfd.events = POLLRDNORM;
+	_vec_pollfd.push_back(new_pollfd);
+	new_Client.~Client();
+	// _update_pollfd();
+}
+
+Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)), 
+	_listen_desc(-1) {
+	nfds_t	poll_ed;
+
+	_listen(inet_addr(host.c_str()), htons(port));
+	while (true) {
+		cout << "while turue" << endl;
+		poll_ed = poll(_vec_pollfd.data(), (nfds_t)_vec_pollfd.size(), TIMEOUT_POLLING);
+		if (poll_ed < 0)
+			throw runtime_error("poll(): " + string(strerror(errno)));
+		if (_vec_pollfd[0].revents == POLLRDNORM)
+			_add_accept();
+		for (nfds_t i = 1; i < (nfds_t)_vec_pollfd.size(); i++) {
+			if (_vec_pollfd[i].revents == POLLRDNORM)
+				Parser	p1(_vec_pollfd[i].fd);
+		}
+	}	
 	// if (errno)
 	// 	perror("accept()");
 	// errno = 0;
 	server_sigint(0);
-	Parser	parser(_accept_sock.sd);
-
+	// Parser	parser(_accept_sock.sd);
 }
 
