@@ -54,13 +54,14 @@ private:
 	struct sockaddr_in			_listen_addr;
 	socklen_t					_listen_len;
 	
-	std::list<class Client>			_accepts;
+	std::vector<class Client *>	_accepts;
 
 	void						_update_pollfd();
 	void						_add_accept();
 	void						_listen(in_addr_t host, in_port_t port);
 public:
 	Server(string host, t_port port);
+	~Server();
 } Server;
 
 #endif // SERVER_HPP

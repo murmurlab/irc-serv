@@ -2,7 +2,10 @@
 #include "Client.hpp"
 #include "Parser.hpp"
 #include <cstddef>
+#include <cstdio>
 #include <cstring>
+#include <netinet/in.h>
+#include <sys/_types/_socklen_t.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
 
@@ -79,24 +82,35 @@ void	Server::_update_pollfd() {
 }
 
 void	Server::_add_accept() {
-	Client			new_Client;
-	struct pollfd	new_pollfd;
+	struct sockaddr_in	addr;
+	socklen_t			len;
+	int					desc;
+	// Client			new_Client;
+	struct pollfd		new_pollfd;
 	
-	new_Client.desc = accept(
-			_listen_desc, (sockaddr *)&new_Client.addr, &new_Client.len
+	std::memset(&addr, 0, sizeof(addr));
+	desc = accept(
+			_listen_desc, (sockaddr *)&addr, &len
 		);
-	cout	<< "[LISTENER] " << "POLLRDNORM " 
-			<< inet_ntoa(new_Client.addr.sin_addr) << endl;
-	// test_input(new_Client.desc);
-	if (new_Client.desc == -1)
+	if (desc == -1)
 		throw runtime_error("accept(): " + string(strerror(errno)));
-	new_pollfd.fd = new_Client.desc;
-	new_pollfd.events = POLLRDNORM;
-	fcntl(new_Client.desc, F_SETFL, O_NONBLOCK);
-	_accepts.push_back(new_Client);
+	if (fcntl(desc, F_SETFL, O_NONBLOCK) == -1)
+		throw runtime_error("fcntl(): " + string(strerror(errno)));
+	if (setsockopt(desc, SOL_SOCKET, SO_REUSEADDR, NULL, 0) < 0 )
+		perror("setsockopt(): ");
+	cout	<< "[LISTENER] " << "POLLRDNORM " 
+			<< inet_ntoa(addr.sin_addr) << endl;
+	test_input(desc);
+	new_pollfd.fd = desc;
+	new_pollfd.events = POLLRDNORM | POLLHUP;
+	_accepts.push_back(new Client(desc, addr));
 	_vec_pollfd.push_back(new_pollfd);
-	new_Client.~Client();
 	// _update_pollfd();
+}
+
+Server::~Server() {
+	for(; !_accepts.empty(); _accepts.pop_back())
+		delete _accepts.back();
 }
 
 Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)), 
@@ -109,17 +123,33 @@ Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)),
 		poll_ed = poll(_vec_pollfd.data(), (nfds_t)_vec_pollfd.size(), TIMEOUT_POLLING);
 		if (poll_ed < 0)
 			throw runtime_error("poll(): " + string(strerror(errno)));
-		if (_vec_pollfd[0].revents == POLLRDNORM)
+		cout << "poll_ed: " << poll_ed << endl;
+		// continue ;
+		// cout << "0: " << (void *)(_vec_pollfd[0].revents) << endl;
+		if (_vec_pollfd[0].revents & POLLRDNORM) {
+			cout << "POLLRDNORM in listener" << endl;
+			// _vec_pollfd[0].revents = 0;
 			_add_accept();
+		}
 		for (nfds_t i = 1; i < (nfds_t)_vec_pollfd.size(); i++) {
-			if (_vec_pollfd[i].revents == POLLRDNORM)
-				Parser	p1(_vec_pollfd[i].fd);
+			// cout << i << ": " << (void *)(_vec_pollfd[i].revents) << endl;
+			if (_vec_pollfd[i].revents & POLLHUP) {
+				cout << " disconnected " << i - 1 << endl;
+				_vec_pollfd.erase(_vec_pollfd.begin() + i);
+				_accepts.erase(_accepts.begin() + i);
+			}
+			else if (_vec_pollfd[i].revents & POLLRDNORM) {
+				cout << "POLLRDNORM in:" << i - 1 << endl;
+				// _vec_pollfd[i].revents = 0;
+				// Parser	p1(_vec_pollfd[i].fd);
+				_accepts[i - 1]->on_data();
+			}
 		}
 	}	
 	// if (errno)
 	// 	perror("accept()");
 	// errno = 0;
-	server_sigint(0);
+	// server_sigint(0);
 	// Parser	parser(_accept_sock.sd);
 }
 

@@ -1,55 +1,6 @@
 #include "irc.hpp"
+#include <cstring>
 #include "Parser.hpp"
-
-// todo: to avoid passing a variadic-size value to read-size argument in read(),
-// give constant-size argument to read-size argument, In this case it will read
-// constant-size byte and will store in the buff1 and if nl is not exist when
-// checked nl in buff1 then part of buff1 that not contains nl is stored in
-// buff2 then read again and store to buff1. Finally, concatenate buff2 with up
-// to the nl part of buff1. buff2 must be read-size bytes in size.
-string get_line_segment(int des) {
-	static char		buff[BUF_LEN] = { };
-	static size_t	req_len = BUF_LEN - 1;
-	static size_t	res_len = read(des, buff, req_len);
-	static char		*(ab[2]) = {buff, 0};
-	string			seg;
-
-	for (; true;) {
-		if (res_len == -1)
-			throw runtime_error("read(): -1");
-		if (res_len == 0)
-			cout << "read(): 0" << endl;
-		ab[1] = std::strchr(ab[0], '\n');
-		// cout << (void *)ab[1] << endl;
-		if (ab[1])
-			break ;
-		if (ab[0] == buff)
-			throw runtime_error("non-nl");
-		if (res_len < req_len) {
-			bzero(buff, BUF_LEN);
-			req_len = BUF_LEN - 1;
-			res_len = read(des, buff, req_len);
-		} else {
-			// cout << "before1: " << ab[0] << endl;
-			// cout << "before1: " << buff << endl;
-			strlcpy(buff, ab[0], (BUF_LEN - 1) - (ab[0] - buff) + 1);
-			// cout << "before2: " << buff << endl;
-			bzero(buff + ((BUF_LEN - 1) - (ab[0] - buff)), (ab[0] - buff));
-			// cout << "before3: " << buff << endl;
-			req_len = BUF_LEN - ((BUF_LEN - 1) - (ab[0] - buff)) - 1;
-			res_len = read(des, buff + ((BUF_LEN - 1) - (ab[0] - buff)), req_len);
-			// if (res_len == -1)
-			// 	cerr << "read(): -1"
-			// cout << "readed: " << buff << endl;
-		}
-		ab[0] = buff;
-		continue ;
-
-	}
-	seg = string(ab[0], (ab[1] - ab[0]) + 1);
-	ab[0] = ab[1] + 1;
-	return seg;
-}
 
 void	parse_commmon(int &sel_parser) {
 	sel_parser++;
@@ -85,9 +36,9 @@ void	parse_unknown(std::stringstream &ss) {
 	cout << "unknown" << endl;
 }
 
-Parser::Parser(int csd): _csd(csd) {
-	_parse();
-}
+// Parser::Parser(int csd): _csd(csd) {
+// 	_parse();
+// }
 
 void Parser::_parse() {
 	// parser.sel_parser = 0;
@@ -96,10 +47,10 @@ void Parser::_parse() {
 		// component.clear();
 		// ss.clear();
 		// (ss.rdbuf()->sgetc() == ':')
-		_line = get_line_segment(_csd);
-		cout << "> " << _line;
+		_gls.get_line_segment();
+		cout << _gls._desc << "> " << _gls._seg;
 
-		_ss.str(_line);
+		_ss.str(_gls._seg);
 		// cout << "str: " << _ss.str();
 
 		// std::getline(ss, component, ' ');
@@ -118,13 +69,13 @@ void Parser::_parse() {
 		while (!_ss.eof()) {
 			cout << "======================================WHILE======================================" << endl;
 			switch (_sel_parser) {
-			case 0:
+			case PARSE_PREFIX:
 				parse_prefix(_ss);
 				break ;
-			case 1:
+			case PARSE_COMMND:
 				parse_command(_ss);
 				break ;
-			case 2:
+			case PARSE_PARAMS:
 				parse_params(_ss);
 				break ;
 			default:
@@ -149,4 +100,62 @@ void Parser::_parse() {
 	// 	bzero(buff, BUF_LEN);
 	// }
 	
+}
+
+Parser::Parser(int desc): _gls(desc) {
+
+}
+
+GetLineSegment::GetLineSegment(int desc_): _desc(desc_) {
+	std::memset(_buff, 0, sizeof(_buff));
+	_req_len = BUF_LEN - 1;
+	_res_len = -1;
+	_ab[0] = _buff;
+	_ab[1] = 0;
+}
+
+// todo: to avoid passing a variadic-size value to read-size argument in read(),
+// give constant-size argument to read-size argument, In this case it will read
+// constant-size byte and will store in the buff1 and if nl is not exist when
+// checked nl in buff1 then part of buff1 that not contains nl is stored in
+// buff2 then read again and store to buff1. Finally, concatenate buff2 with up
+// to the nl part of buff1. buff2 must be read-size bytes in size.
+void GetLineSegment::get_line_segment() {
+	for (; true;) {
+		if (_res_len == -1) {
+			_res_len = read(_desc, _buff, _req_len);
+			if (_res_len == -1)
+				throw IRC_MsgIncomplate("read(): -1");
+		}
+		if (_res_len == 0)
+			cout << "read(): 0" << endl;
+		_ab[1] = std::strchr(_ab[0], '\n');
+		// cout << (void *)ab[1] << endl;
+		if (_ab[1])
+			break ;
+		if (_ab[0] == _buff)
+			throw runtime_error("non-nl");
+		if (_res_len < _req_len) {
+			bzero(_buff, BUF_LEN);
+			_req_len = BUF_LEN - 1;
+			_res_len = read(_desc, _buff, _req_len);
+		} else {
+			// cout << "before1: " << ab[0] << endl;
+			// cout << "before1: " << buff << endl;
+			strlcpy(_buff, _ab[0], (BUF_LEN - 1) - (_ab[0] - _buff) + 1);
+			// cout << "before2: " << buff << endl;
+			bzero(_buff + ((BUF_LEN - 1) - (_ab[0] - _buff)), (_ab[0] - _buff));
+			// cout << "before3: " << buff << endl;
+			_req_len = BUF_LEN - ((BUF_LEN - 1) - (_ab[0] - _buff)) - 1;
+			_res_len = read(_desc, _buff + ((BUF_LEN - 1) - (_ab[0] - _buff)), _req_len);
+			// if (res_len == -1)
+			// 	cerr << "read(): -1"
+			// cout << "readed: " << buff << endl;
+		}
+		_ab[0] = _buff;
+		continue ;
+
+	}
+	_seg = string(_ab[0], (_ab[1] - _ab[0]) + 1);
+	_ab[0] = _ab[1] + 1;
 }

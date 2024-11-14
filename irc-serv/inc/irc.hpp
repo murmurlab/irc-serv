@@ -1,4 +1,3 @@
-#include <exception>
 #if !defined(IRC_HPP)
 # define IRC_HPP
 
@@ -35,7 +34,6 @@ using std::cerr;
 
 # define IPv4(a, b, c, d) (a << 0 | b << 8 | c << 16 | d << 24)
 
-# define BUF_LEN	512
 # define PORT_NUM	4445
 
 # define CAP_SASL		"sasl"

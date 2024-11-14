@@ -1,4 +1,5 @@
 // #include "common.hpp"
+#include "Server.hpp"
 #include "irc.hpp"
 
 int main(int argc, char const *argv[]) try {
@@ -10,7 +11,8 @@ int main(int argc, char const *argv[]) try {
 
 	// 	}
 	// };
-	Server	s1("10.11.8.7", 4445);
+	Server	s1("10.11.32.10", 4445);
+	s1.~Server();
 	// create_socket();
 	return 0;
 } catch (exception& e) {
