@@ -14,6 +14,7 @@ Client::Client(int desc_, struct sockaddr_in addr_):
 void	Client::on_data() {
 	try {
 		_parser._parse();
+		// execute command
 	} catch (IRC_MsgIncomplate& e) {
 		cout << e.what() << ": Client::on_data(): IRC_MsgIncomplate" << endl;
 	}
