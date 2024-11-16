@@ -3,6 +3,7 @@
 
 # include "ExceptionMsgIncomplate.hpp"
 
+# include <sstream>
 # include <string>
 # include <cstddef>
 # include <cstring>
@@ -14,18 +15,25 @@ using std::runtime_error;
 using std::cout;
 using std::endl;
 using std::string;
+using std::stringstream;
 
-# define BUF_LEN	512
+# define MAX_LEN	511
+# define REQ_LEN	5
+
+# if (REQ_LEN > MAX_LEN)
+# warning "REQ_LEN greater then MAX_LEN"
+# endif
 
 class	GetLineSegment {
-	char						_buff[BUF_LEN];
-	size_t						_req_len;
+	typedef IRC_MsgIncomplate 	ewouldblock;
+	string						_left;
 	size_t						_res_len;
-	char						*(_ab[2]);
+	string						_d_sub;
+	string::size_type			_d_pos;
 public:
+	string						*seg;
 	int							_desc;
-	string						_seg;
-	void						get_line_segment();
+	string						*get_line_segment();
 								GetLineSegment(int desc_);
 };
 

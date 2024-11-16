@@ -20,6 +20,7 @@ public:
 	string				*trailing;
 
 						Message();
+						~Message();
 };
 
 #endif // MESSAGE_HPP

@@ -85,15 +85,15 @@ void Parser::_lexer() {
 		// sleep(1);
 		// component.clear();
 		// (ss.rdbuf()->sgetc() == ':')
-		_gls.get_line_segment();
-		_gls._seg.erase(_gls._seg.end() - 2, _gls._seg.end());
-		// _gls._seg.end() - 1;
+		_gls.seg = _gls.get_line_segment();
+		// _gls.seg.erase(_gls.seg.end() - 2, _gls.seg.end());
+		// _gls.seg.end() - 1;
 		msgs.resize(msgs.size() + 1);
 		_msg = &msgs.back();
 
-		cout << _gls._desc << "> " << _gls._seg << endl;
+		cout << _gls._desc << "> " << *_gls.seg << endl;
 
-		_ss.str(_gls._seg);
+		_ss.str(*_gls.seg);
 		while (!_ss.eof()) {
 			// cout << _sel_parser << "======================================WHILE======================================" << endl;
 			usleep(100000);

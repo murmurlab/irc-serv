@@ -1,55 +1,44 @@
 #include "GetLineSegment.hpp"
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <exception>
+#include <iostream>
+#include <iterator>
+#include <stdexcept>
+#include <string>
 
-GetLineSegment::GetLineSegment(int desc_): _desc(desc_) {
-	std::memset(_buff, 0, sizeof(_buff));
-	_req_len = BUF_LEN - 1;
-	_res_len = -1;
-	_ab[0] = _buff;
-	_ab[1] = 0;
+GetLineSegment::GetLineSegment(int desc_): _desc(desc_),
+	_d_sub("\r\n") {
+	// _ab[0] = _buff;
+	// _ab[1] = 0;
 }
 
-// todo: to avoid passing a variadic-size value to read-size argument in read(),
-// give constant-size argument to read-size argument, In this case it will read
-// constant-size byte and will store in the buff1 and if nl is not exist when
-// checked nl in buff1 then part of buff1 that not contains nl is stored in
-// buff2 then read again and store to buff1. Finally, concatenate buff2 with up
-// to the nl part of buff1. buff2 must be read-size bytes in size.
-void GetLineSegment::get_line_segment() {
-	for (; true;) {
-		if (_res_len == -1) {
-			_res_len = read(_desc, _buff, _req_len);
-			if (_res_len == -1)
-				throw IRC_MsgIncomplate("read(): -1");
-		}
-		if (_res_len == 0)
-			cout << "read(): 0" << endl;
-		_ab[1] = std::strstr(_ab[0], "\r\n");
-		// cout << (void *)ab[1] << endl;
-		if (_ab[1])
-			break ;
-		if (_ab[0] == _buff)
-			throw runtime_error("non-nl");
-		if (_res_len < _req_len) {
-			bzero(_buff, BUF_LEN);
-			_req_len = BUF_LEN - 1;
-			_res_len = read(_desc, _buff, _req_len);
-		} else {
-			// cout << "before1: " << ab[0] << endl;
-			// cout << "before1: " << buff << endl;
-			strlcpy(_buff, _ab[0], (BUF_LEN - 1) - (_ab[0] - _buff) + 1);
-			// cout << "before2: " << buff << endl;
-			bzero(_buff + ((BUF_LEN - 1) - (_ab[0] - _buff)), (_ab[0] - _buff));
-			// cout << "before3: " << buff << endl;
-			_req_len = BUF_LEN - ((BUF_LEN - 1) - (_ab[0] - _buff)) - 1;
-			_res_len = read(_desc, _buff + ((BUF_LEN - 1) - (_ab[0] - _buff)), _req_len);
-			// if (res_len == -1)
-			// 	cerr << "read(): -1"
-			// cout << "readed: " << buff << endl;
-		}
-		_ab[0] = _buff;
-		continue ;
 
+string *GetLineSegment::get_line_segment() {
+	string	*tmp;
+	char	buff[REQ_LEN + 1];
+
+	while (1) {
+		std::memset(buff, 0, REQ_LEN + 1);
+		_res_len = read(_desc, buff, REQ_LEN);
+		if ((_res_len == -1) && (errno == EWOULDBLOCK))
+			throw ewouldblock("read(): -1");
+		if (_res_len == 0) {
+			std::cerr << "read(): 0" << endl;
+			throw std::runtime_error("read(): 0");
+		}
+		_left = (_left + buff);
+		_d_pos = _left.find(_d_sub);
+		if (_d_pos == string::npos)
+			continue ;
+		if (std::distance(_left.begin(), _left.begin() + _d_pos) > MAX_LEN)
+			throw std::runtime_error("exceed element throwu");
+		tmp = new string(_left.begin(), _left.begin() + _d_pos);
+		_left.erase(_left.begin(), _left.begin() + (_d_pos + _d_sub.length()));
+		return tmp;
+		// std::cout << _left << std::endl;
+		
 	}
-	_seg = string(_ab[0], (_ab[1] - _ab[0]) + 2);
-	_ab[0] = _ab[1] + 2;
 }
+
