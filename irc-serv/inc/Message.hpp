@@ -18,7 +18,7 @@ public:
 	string				command;
 	std::vector<string>	params;
 	string				*trailing;
-
+						~Message();
 						Message();
 };
 

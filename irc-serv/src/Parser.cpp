@@ -58,21 +58,21 @@ void	Parser::_token_unknown() {
 void	Parser::print_msg(Message &msg) {
 	std::ostringstream	os;
 	
-	if (!_msg->prefix.nick)
+	if (!msg.prefix.nick)
 		goto nextprint;
-	os << *_msg->prefix.nick;
-	if (_msg->prefix.user)
-		os << "!" << *_msg->prefix.user;
-	if (_msg->prefix.host)
-		os << "@" << *_msg->prefix.host;
+	os << *msg.prefix.nick;
+	if (msg.prefix.user)
+		os << "!" << *msg.prefix.user;
+	if (msg.prefix.host)
+		os << "@" << *msg.prefix.host;
 	nextprint:
 	cout << "PREFIX:	" << os.str() << endl;
-	cout << "COMMAND:	" << _msg->command << endl;
+	cout << "COMMAND:	" << msg.command << endl;
 	cout << "PARAMS" << endl;
-	for(size_t i = 0; i < _msg->params.size(); i++) {
-		cout << "		[" << i << "]: " << _msg->params[i] << endl;
+	for(size_t i = 0; i < msg.params.size(); i++) {
+		cout << "		[" << i << "]: " << msg.params[i] << endl;
 	}
-	cout << "TRAILING:	" << (_msg->trailing ? *_msg->trailing : "") << endl;
+	cout << "TRAILING:	" << (msg.trailing ? *msg.trailing : "") << endl;
 }
 
 void	Parser::parse() {
@@ -80,8 +80,93 @@ void	Parser::parse() {
 
 }
 
-void Parser::_lexer() {
-	while (2) {
+Message &Parser::_CAP(Message &req, Message &retRequest)
+{
+
+	if (req.command != "CAP")
+		return retRequest;
+	else
+		retRequest.command = "CAP";
+	retRequest.params.push_back("*");
+	for (int x = 0; x < req.params.size(); x++)
+	{
+		if (req.params[x] == "LS")
+				retRequest.params.push_back("LS"), \
+					retRequest.trailing = new string("sasl");
+		if (req.params[x++] == "REQ")
+		{
+			if (req.params[x] != "sasl")
+			{
+				retRequest.params.clear();
+				retRequest.params.push_back("NAK");
+				if (retRequest.trailing)
+					delete retRequest.trailing , \
+						retRequest.trailing = new string(req.params[x]);
+				else
+					retRequest.trailing = new string (req.params[x]);
+			}
+			if (req.params[x] == "sasl")
+			{
+				retRequest.params.push_back("ACK");
+				if (retRequest.trailing)
+					delete retRequest.trailing , \
+						retRequest.trailing = new string(req.params[x]);
+				else
+					retRequest.trailing = new string (req.params[x]);
+			}
+		}
+	}
+	return (retRequest);
+}
+Message &Parser::_AUTH(Message &req,Message &retRequest)
+{
+	if (req.command != "AUTHENTICATE")
+		return (retRequest);
+	else
+		retRequest.command = "AUTHENTICATE";
+	for (int x = 0; x < req.params.size(); x++)
+	{
+		if (req.params[x] == "PLAIN")
+			retRequest.params.push_back("+");
+		if (strlen(req.params[x].c_str()) == 20)
+		{
+			retRequest.command = "001";
+			retRequest.params.clear();
+			if (!retRequest.trailing)
+				retRequest.trailing = new string("Welcome FT_IRC");
+			break ;
+		}
+	}
+	return (retRequest);
+}
+void testResponse(Message &req, int _desc)
+{
+	string res;
+	goto test;
+	if (!req.prefix.user->empty())
+	{
+		res = ":";
+		if (!req.prefix.nick->empty())
+			res += *req.prefix.nick;
+		else
+			res += *req.prefix.nick + "!" \
+				+ *req.prefix.user + " ";
+	}
+	test:
+	if (!req.command.empty())
+		res += req.command + " ";
+	for (int x = 0; x < req.params.size(); x++)
+		res += req.params[x] + " ";
+	if (req.trailing)
+		res += ":" + *req.trailing;
+	res += "\r\n";
+	std::cout << "------------ " << res << " -------" << endl;
+	write(_desc, res.c_str(), strlen(res.c_str()));
+}
+
+void Parser::_lexer()
+{
+    while (2) {
 		// sleep(1);
 		// component.clear();
 		// (ss.rdbuf()->sgetc() == ':')
@@ -112,8 +197,16 @@ void Parser::_lexer() {
 				break ;
 			}
 		}
+		Message newMesage;
+		if (_msg->command == "CAP")
+			testResponse(_CAP(*_msg, newMesage), _gls._desc);
+		if (_msg->command == "AUTHENTICATE")
+			testResponse(_AUTH(*_msg, newMesage), _gls._desc);
 		_sel_parser = PARSE_PREFIX;;
 		_ss.clear();
+
+
+		
 		// _msg->print_msg(*_msg);
 		print_msg(*_msg);
 		// delete msg;
@@ -132,7 +225,6 @@ void Parser::_lexer() {
 	// 	// cout << "byte: " << size << " data: " << buff << endl;
 	// 	bzero(buff, BUF_LEN);
 	// }
-	
 }
 
 Parser::Parser(int desc): _gls(desc), _sel_parser(PARSE_PREFIX) {
