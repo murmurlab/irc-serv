@@ -1,9 +1,8 @@
 #include "Client.hpp"
-#include "Parser.hpp"
-#include <cstring>
 
 Client::Client(int desc_, struct sockaddr_in addr_):
-	desc(desc_), addr(addr_), len(sizeof(addr_)), _parser(desc_) {
+	desc(desc_), addr(addr_), len(sizeof(addr_)), _parser(desc_),
+	_executer(_parser) {
 }
 
 // Client::Client(Client const &copy):
@@ -12,11 +11,6 @@ Client::Client(int desc_, struct sockaddr_in addr_):
 // }
 
 void	Client::on_data() {
-	try {
-		_parser._parse();
-		// execute command
-	} catch (IRC_MsgIncomplate& e) {
-		cout << e.what() << ": Client::on_data(): IRC_MsgIncomplate" << endl;
-	}
+	_executer.execute();
 }
 

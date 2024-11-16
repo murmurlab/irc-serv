@@ -4,8 +4,7 @@
             "name": "Mac",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}/**",
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers"
+                "${workspaceFolder}/**"
             ]
         }
     ],

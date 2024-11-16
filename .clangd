@@ -1,3 +1,6 @@
 CompileFlags:
     Add:
-    - "-I/Users/ahbasara/sources/repos/irc/irc-serv/inc/"
+    - -Wc99-designator
+    - -std=c++98
+    - -pedantic
+    - -I../inc

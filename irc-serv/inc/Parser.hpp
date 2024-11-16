@@ -1,48 +1,13 @@
 #if !defined(PARSER_HPP)
 # define PARSER_HPP
 
+# include <GetLineSegment.hpp>
+# include "Message.hpp"
 # include <list>
-# include <sstream>
 # include <string>
-# include <typeinfo>
-
-# define BUF_LEN	512
+# include <sstream>
 
 using std::string;
-using std::exception;
-
-class IRC_MsgIncomplate: public exception {
-	public:
-		IRC_MsgIncomplate() : msg_(typeid(*this).name()) {}
-
-		/** Constructor (C strings).
-		 *  @param message	The error message.
-		 *  				the function is explicit to block implicitly cast
-		 */
-		explicit IRC_MsgIncomplate(const char* message) 
-			: msg_(string(message)) {}
-		explicit IRC_MsgIncomplate(const std::string& message)
-			: msg_(string(message)) {}
-
-		virtual ~IRC_MsgIncomplate() throw() {}
-		virtual const char* what() const throw() {
-			return msg_.c_str();
-		}
-	protected:
-		std::string msg_;
-};
-
-class	GetLineSegment {
-	char						_buff[BUF_LEN];
-	size_t						_req_len;
-	size_t						_res_len;
-	char						*(_ab[2]);
-public:
-	int							_desc;
-	string						_seg;
-	void						get_line_segment();
-								GetLineSegment(int desc_);
-};
 
 typedef enum e_component {
 	PARSE_PREFIX,
@@ -51,18 +16,32 @@ typedef enum e_component {
 	PARSE_UNKNWN
 } e_component;
 
+typedef enum {
+		CAP,
+		NICK,
+		USER,
+		AUTHENTICATE,
+		UNKNOWNCMD
+}		e_cmd;
+
 typedef struct Parser
 {
-	e_component					_sel_parser;
+	int							_sel_parser;
 	GetLineSegment				_gls;
 	std::stringstream			_ss;
-	typedef IRC_MsgIncomplate	IRC_MsgIncomplate;
+	// typedef IRC_MsgIncomplate	IRC_MsgIncomplate;
 
+	Message						*_msg;
+	void						_token_commmon();
+	void						_token_prefix();
+	void						_token_command();
+	void						_token_params();
+	void						_token_unknown();
+	void						_lexer();
+	void						print_msg(Message &msg);
 public:
-	void						_parse();
-	string						prefix;
-	string						command;
-	std::list<string>			params;
+	std::list<Message>			msgs;
+	void						parse();
 								Parser(int desc_of_gls);
 }	Parser;
 

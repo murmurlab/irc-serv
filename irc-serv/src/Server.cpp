@@ -43,6 +43,7 @@ static void	test_input(int csd) {
 void	Server::_listen(in_addr_t host, in_port_t port) {
 	const static size_t P_IP =	getprotobyname("ip")->p_proto; // use tcp
 	struct pollfd		new_pollfd;
+	int					*option_value;
 	
 	std::memset(&_listen_addr, 0, sizeof(_listen_addr));
 	// std::memset(&_active, 0, sizeof(_active));
@@ -57,6 +58,8 @@ void	Server::_listen(in_addr_t host, in_port_t port) {
 	std::signal(SIGINT, server_sigint);
 	if ((_listen_desc = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) == -1)
 		throw runtime_error("socket(): " + string(strerror(errno)));
+	if (setsockopt(_listen_desc, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(int)) < 0 )
+		perror("setsockopt(): ");
 	// cout << sd << endl;
 	if (bind(_listen_desc, (sockaddr *)&_listen_addr, sizeof(_listen_addr)) == -1)
 		throw runtime_error("bind(): " + string(strerror(errno)));
@@ -96,8 +99,8 @@ void	Server::_add_accept() {
 		throw runtime_error("accept(): " + string(strerror(errno)));
 	if (fcntl(desc, F_SETFL, O_NONBLOCK) == -1)
 		throw runtime_error("fcntl(): " + string(strerror(errno)));
-	if (setsockopt(desc, SOL_SOCKET, SO_REUSEADDR, NULL, 0) < 0 )
-		perror("setsockopt(): ");
+	// if (setsockopt(desc, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(int)) < 0 )
+	// 	perror("setsockopt(): ");
 	cout	<< "[LISTENER] " << "POLLRDNORM " 
 			<< inet_ntoa(addr.sin_addr) << endl;
 	test_input(desc);
