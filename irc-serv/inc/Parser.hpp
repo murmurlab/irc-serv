@@ -39,8 +39,11 @@ typedef struct Parser
 	void						_token_unknown();
 	void						_lexer();
 	void						print_msg(Message &msg);
+	Message						&_AUTH(Message &req,Message &retRequest);
+	Message						&_CAP(Message &req, Message &retRequest);
 public:
 	std::list<Message>			msgs;
+	std::list<Message>			response;
 	void						parse();
 								Parser(int desc_of_gls);
 }	Parser;
