@@ -151,18 +151,16 @@ string Executer::_serialize(Message const &res) {
 	// }
 
 	test:
-	{
-		if (!res.command.empty())
-			ret += res.command + " ";
-		for (int x = 0; x < res.params.size(); x++)
-			ret += res.params[x] + " ";
-		if (res.trailing)
-			ret += ":" + *res.trailing;
-		ret += "\r\n";
-		std::cout << "------------ " << ret << " -------" << endl;
-		return ret;
-		// write(_desc, ret.c_str(), strlen(ret.c_str()));
-	}
+	if (!res.command.empty())
+		ret += res.command + " ";
+	for (int x = 0; x < res.params.size(); x++)
+		ret += res.params[x] + " ";
+	if (res.trailing)
+		ret += ":" + *res.trailing;
+	ret += "\r\n";
+	std::cout << "------------ " << ret << " -------" << endl;
+	return ret;
+	// write(_desc, ret.c_str(), strlen(ret.c_str()));
 
 	return "";
 }

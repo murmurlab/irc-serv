@@ -117,6 +117,8 @@ static void	write_data(int desc, string const &line) {
 }
 
 void	Server::_respondOne(Client &receiver) {
+	if (receiver._executer.responses.empty())
+		return ;
 	Message const	&res_msg = receiver._executer.responses.back();
 	string const	&res_raw = receiver._executer._serialize(res_msg);
 	Client			*sender;
@@ -164,9 +166,9 @@ Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)),
 				// _vec_pollfd[i].revents = 0;
 				// Parser	p1(_vec_pollfd[i].fd);
 				_accepts[i - 1]->on_data();
-
-				// _respondAll(_accepts[i - 1]);
+				std::cout << "/* message */" << _accepts[i - 1]->desc << std::endl;
 				_respondOne(*_accepts[i - 1]);
+				// _respondAll(_accepts[i - 1]);
 			}
 		}
 	}	
