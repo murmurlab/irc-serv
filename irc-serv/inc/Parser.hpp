@@ -24,7 +24,7 @@ typedef enum {
 		UNKNOWNCMD
 }		e_cmd;
 
-typedef struct Parser
+class Parser
 {
 	int							_sel_parser;
 	GetLineSegment				_gls;
@@ -39,14 +39,13 @@ typedef struct Parser
 	void						_token_unknown();
 	void						_lexer();
 	void						print_msg(Message &msg);
-	Message						&_AUTH(Message &req,Message &retRequest);
-	Message						&_CAP(Message &req, Message &retRequest);
+	// Message						&_AUTH(Message &req,Message &retRequest);
+	// Message						&_CAP(Message &req, Message &retRequest);
 public:
 	std::list<Message>			msgs;
-	std::list<Message>			response;
 	void						parse();
 								Parser(int desc_of_gls);
-}	Parser;
+};
 
 
 #endif // PARSER_HPP

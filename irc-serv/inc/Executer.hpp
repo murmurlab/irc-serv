@@ -3,19 +3,28 @@
 
 # include <string>
 # include <iostream>
+# include <list>
+
+// #include "Message.hpp"
 
 using std::string;
 using std::endl;
 using std::cout;
 
 class	Parser;
+class	Message;
+class	Client;
 
 class Executer {
-	Parser	&_parser;
-	void	_match();
+	Client				&_me;
+	Parser				&_parser;
+	void				_match(std::list<Message> &msgs);
+	
 public:
-			Executer(Parser &parser);
-	void	execute();
+	std::list<Message>	responses;
+	string				_serialize();
+						Executer(Parser &parser, Client &me_);
+	void				execute();
 };
 
 #endif // EXECUTER_HPP

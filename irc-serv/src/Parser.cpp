@@ -1,5 +1,7 @@
 #include "Parser.hpp"
+#include "Client.hpp"
 #include <algorithm>
+#include <string>
 
 void	Parser::_token_commmon() {
 	_sel_parser++;
@@ -30,8 +32,6 @@ void	Parser::_token_prefix() {
 }
 
 void	Parser::_token_command() {
-	// string	command;
-	
 	_token_commmon();
 	_ss >> _msg->command;
 }
@@ -77,91 +77,6 @@ void	Parser::print_msg(Message &msg) {
 
 void	Parser::parse() {
 	_lexer();
-
-}
-
-Message &Parser::_CAP(Message &req, Message &retRequest)
-{
-
-	if (req.command != "CAP")
-		return retRequest;
-	else
-		retRequest.command = "CAP";
-	retRequest.params.push_back("*");
-	for (int x = 0; x < req.params.size(); x++)
-	{
-		if (req.params[x] == "LS")
-				retRequest.params.push_back("LS"), \
-					retRequest.trailing = new string("sasl");
-		if (req.params[x++] == "REQ")
-		{
-			if (req.params[x] != "sasl")
-			{
-				retRequest.params.clear();
-				retRequest.params.push_back("NAK");
-				if (retRequest.trailing)
-					delete retRequest.trailing , \
-						retRequest.trailing = new string(req.params[x]);
-				else
-					retRequest.trailing = new string (req.params[x]);
-			}
-			if (req.params[x] == "sasl")
-			{
-				retRequest.params.push_back("ACK");
-				if (retRequest.trailing)
-					delete retRequest.trailing , \
-						retRequest.trailing = new string(req.params[x]);
-				else
-					retRequest.trailing = new string (req.params[x]);
-			}
-		}
-	}
-	return (retRequest);
-}
-Message &Parser::_AUTH(Message &req,Message &retRequest)
-{
-	if (req.command != "AUTHENTICATE")
-		return (retRequest);
-	else
-		retRequest.command = "AUTHENTICATE";
-	for (int x = 0; x < req.params.size(); x++)
-	{
-		if (req.params[x] == "PLAIN")
-			retRequest.params.push_back("+");
-		if (strlen(req.params[x].c_str()) == 20)
-		{
-			retRequest.command = "001";
-			retRequest.params.clear();
-			if (!retRequest.trailing)
-				retRequest.trailing = new string("Welcome FT_IRC");
-			break ;
-		}
-	}
-	return (retRequest);
-}
-void testResponse(Message &req, int _desc)
-{
-	string res;
-	goto test;
-	if (!req.prefix.user->empty())
-	{
-		res = ":";
-		if (!req.prefix.nick->empty())
-			res += *req.prefix.nick;
-		else
-			res += *req.prefix.nick + "!" \
-				+ *req.prefix.user + " ";
-	}
-	test:
-	if (!req.command.empty())
-		res += req.command + " ";
-	for (int x = 0; x < req.params.size(); x++)
-		res += req.params[x] + " ";
-	if (req.trailing)
-		res += ":" + *req.trailing;
-	res += "\r\n";
-	std::cout << "------------ " << res << " -------" << endl;
-	write(_desc, res.c_str(), strlen(res.c_str()));
 }
 
 void Parser::_lexer()
@@ -197,11 +112,6 @@ void Parser::_lexer()
 				break ;
 			}
 		}
-		Message newMesage;
-		if (_msg->command == "CAP")
-			testResponse(_CAP(*_msg, newMesage), _gls._desc);
-		if (_msg->command == "AUTHENTICATE")
-			testResponse(_AUTH(*_msg, newMesage), _gls._desc);
 		_sel_parser = PARSE_PREFIX;;
 		_ss.clear();
 
@@ -209,6 +119,13 @@ void Parser::_lexer()
 		
 		// _msg->print_msg(*_msg);
 		print_msg(*_msg);
+		{
+			// return ;// one message
+			// return ;// one message
+			// return ;// one message
+			// return ;// one message
+
+		}
 		// delete msg;
 		// if (rec == S_Q_CAP_LS)
 		// 	write(*(int *)csd, S_A_CAP_LS, sizeof(S_A_CAP_LS));

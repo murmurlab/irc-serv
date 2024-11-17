@@ -55,7 +55,7 @@ void	Server::_listen(in_addr_t host, in_port_t port) {
 	// cout << inet_addr("127.0.0.1") << endl;
 	// cout << _listen_addr.sin_addr.s_addr << endl;
 
-	std::signal(SIGINT, server_sigint);
+	// std::signal(SIGINT, server_sigint);
 	if ((_listen_desc = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) == -1)
 		throw runtime_error("socket(): " + string(strerror(errno)));
 	if (setsockopt(_listen_desc, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(int)) < 0 )
@@ -111,6 +111,10 @@ void	Server::_add_accept() {
 	// _update_pollfd();
 }
 
+// void	Server::_respondOne(Client &responder) {
+// 	responder._executer._serialize()
+// }
+
 Server::~Server() {
 	for(; !_accepts.empty(); _accepts.pop_back())
 		delete _accepts.back();
@@ -146,6 +150,7 @@ Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)),
 				// _vec_pollfd[i].revents = 0;
 				// Parser	p1(_vec_pollfd[i].fd);
 				_accepts[i - 1]->on_data();
+				// _respond(_accepts[i - 1]);
 			}
 		}
 	}	

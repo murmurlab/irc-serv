@@ -14,10 +14,11 @@ class	Parser;
 
 typedef struct Client {
 private:
-	Parser				_parser;
-	Executer			_executer;
 	// std::list<IRC_msg>	&_msgs;
 public:
+	Parser				_parser;
+	Executer			_executer;
+	
 	void				on_data();
 	int					desc;
 	struct sockaddr_in	addr;
