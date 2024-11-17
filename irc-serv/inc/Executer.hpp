@@ -18,11 +18,11 @@ class	Client;
 class Executer {
 	Client				&_me;
 	Parser				&_parser;
-	void				_match(std::list<Message> &msgs);
-	
+	void				_matchAll(std::list<Message> &msgs);
+	int					_matchOne(std::list<Message> &msgs);
 public:
 	std::list<Message>	responses;
-	string				_serialize();
+	string				_serialize(Message const &res);
 						Executer(Parser &parser, Client &me_);
 	void				execute();
 };

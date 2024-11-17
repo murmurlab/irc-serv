@@ -85,7 +85,7 @@ void Parser::_lexer()
 		// sleep(1);
 		// component.clear();
 		// (ss.rdbuf()->sgetc() == ':')
-		_gls.seg = _gls.get_line_segment();
+		_gls.seg = _gls.get_line_segment(); // delete while, function should parse only one line
 		// _gls.seg.erase(_gls.seg.end() - 2, _gls.seg.end());
 		// _gls.seg.end() - 1;
 		msgs.resize(msgs.size() + 1);

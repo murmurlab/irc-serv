@@ -41,7 +41,7 @@ Message &_AUTH(Message &req,Message &retRequest)
 	{
 		if (req.params[x] == "PLAIN")
 			retRequest.params.push_back("+");
-		if (strlen(req.params[x].c_str()) == 20)
+		if (req.params[x] == "ZmZmAGZmZgAxMjM0")
 		{
 			retRequest.command = "001";
 			retRequest.params.clear();
@@ -92,7 +92,7 @@ Message &_CAP(Message &msg, Message &res)
 	return (res);
 }
 
-void Executer::_match(std::list<Message> &msgs) {
+void Executer::_matchAll(std::list<Message> &msgs) {
 	Message	*res;
 	
 	res = NULL;
@@ -115,8 +115,30 @@ void Executer::_match(std::list<Message> &msgs) {
 	}
 }
 
-string Executer::_serialize() {
-	string res;
+int Executer::_matchOne(std::list<Message> &msgs) {
+	Message	*res, *msg;
+	
+	if (msgs.empty())
+		return 0;
+	msg = &(msgs.back());
+	responses.resize(responses.size() + 1);
+	res = &responses.back();
+
+	if (msg->command == "CAP") {
+		_CAP(*msg, *res);
+	} else if (msg->command == "USER") {
+		cout << "register user" << endl;
+	} else if (msg->command == "AUTHENTICATE")
+		_AUTH(*msg, *res);		
+	else {
+		responses.resize(responses.size() - 1);
+	}
+	msgs.pop_back();
+	return 1;
+}
+
+string Executer::_serialize(Message const &res) {
+	string ret;
 	goto test;
 	// if (!req.prefix.user->empty())
 	// {
@@ -130,15 +152,16 @@ string Executer::_serialize() {
 
 	test:
 	{
-		// if (!req.command.empty())
-		// 	res += req.command + " ";
-		// for (int x = 0; x < req.params.size(); x++)
-		// 	res += req.params[x] + " ";
-		// if (req.trailing)
-		// 	res += ":" + *req.trailing;
-		// res += "\r\n";
-		// std::cout << "------------ " << res << " -------" << endl;
-		// write(_desc, res.c_str(), strlen(res.c_str()));
+		if (!res.command.empty())
+			ret += res.command + " ";
+		for (int x = 0; x < res.params.size(); x++)
+			ret += res.params[x] + " ";
+		if (res.trailing)
+			ret += ":" + *res.trailing;
+		ret += "\r\n";
+		std::cout << "------------ " << ret << " -------" << endl;
+		return ret;
+		// write(_desc, ret.c_str(), strlen(ret.c_str()));
 	}
 
 	return "";
@@ -150,6 +173,6 @@ void	Executer::execute() {
 	} catch (IRC_MsgIncomplate& e) {
 		cout << e.what() << ": Executer::execute(): IRC_MsgIncomplate" << endl;
 	}
-	_match(_parser.msgs);
-	// _matchOne(_parser.msgs);
+	// _matchAll(_parser.msgs);
+	while (_matchOne(_parser.msgs));
 }

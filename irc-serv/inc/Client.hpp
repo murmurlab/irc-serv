@@ -18,7 +18,8 @@ private:
 public:
 	Parser				_parser;
 	Executer			_executer;
-	
+
+	string				username;
 	void				on_data();
 	int					desc;
 	struct sockaddr_in	addr;

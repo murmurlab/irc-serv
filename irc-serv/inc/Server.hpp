@@ -56,7 +56,8 @@ private:
 	
 	std::vector<class Client *>	_accepts;
 
-	void						_respond();
+	void						_respondOne(Client &responder);
+	// void						_respond();
 	void						_update_pollfd();
 	void						_add_accept();
 	void						_listen(in_addr_t host, in_port_t port);

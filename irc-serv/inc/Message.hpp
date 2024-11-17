@@ -10,6 +10,7 @@ using std::vector;
 
 class Message {
 public:
+	string				receiver;
 	struct s_prefix {
 		string	*nick;
 		string	*user;

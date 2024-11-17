@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <netinet/in.h>
+#include <string>
 #include <sys/_types/_socklen_t.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
@@ -111,9 +112,22 @@ void	Server::_add_accept() {
 	// _update_pollfd();
 }
 
-// void	Server::_respondOne(Client &responder) {
-// 	responder._executer._serialize()
-// }
+static void	write_data(int desc, string const &line) {
+	write(desc, line.c_str(), line.length());
+}
+
+void	Server::_respondOne(Client &receiver) {
+	Message const	&res_msg = receiver._executer.responses.back();
+	string const	&res_raw = receiver._executer._serialize(res_msg);
+	Client			*sender;
+	// if (res_msg.prefix.u)
+	write_data(receiver.desc, res_raw);
+	// for (std::vector<class Client *>::size_type i = 0; i < _accepts.size(); i++) {
+	// 	if (_accepts[i]->username == *res_msg.prefix.user) {
+	// 		write_data(receiver.desc, res_raw);
+	// }
+	receiver._executer.responses.pop_back();
+}
 
 Server::~Server() {
 	for(; !_accepts.empty(); _accepts.pop_back())
@@ -150,7 +164,9 @@ Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)),
 				// _vec_pollfd[i].revents = 0;
 				// Parser	p1(_vec_pollfd[i].fd);
 				_accepts[i - 1]->on_data();
-				// _respond(_accepts[i - 1]);
+
+				// _respondAll(_accepts[i - 1]);
+				_respondOne(*_accepts[i - 1]);
 			}
 		}
 	}	
