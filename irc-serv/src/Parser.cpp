@@ -43,6 +43,7 @@ void	Parser::_token_params() {
 	_ss.get();
 	if (_ss.rdbuf()->sgetc() == ':') {
 		_msg->trailing = new string;
+		_ss.get();
 		std::getline(_ss, *_msg->trailing, '\0');
 	} else {
 		_ss >> a_param;
