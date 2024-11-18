@@ -142,15 +142,15 @@ Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)),
 
 	_listen(inet_addr(host.c_str()), htons(port));
 	while (true) {
-		cout << "while turue" << endl;
+		// cout << "while turue" << endl;
 		poll_ed = poll(_vec_pollfd.data(), (nfds_t)_vec_pollfd.size(), TIMEOUT_POLLING);
 		if (poll_ed < 0)
 			throw runtime_error("poll(): " + string(strerror(errno)));
-		cout << "poll_ed: " << poll_ed << endl;
+		// cout << "poll_ed: " << poll_ed << endl;
 		// continue ;
 		// cout << "0: " << (void *)(_vec_pollfd[0].revents) << endl;
 		if (_vec_pollfd[0].revents & POLLRDNORM) {
-			cout << "POLLRDNORM in listener" << endl;
+			// cout << "POLLRDNORM in listener" << endl;
 			// _vec_pollfd[0].revents = 0;
 			_add_accept();
 		}
@@ -162,11 +162,11 @@ Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)),
 				_accepts.erase(_accepts.begin() + i);
 			}
 			else if (_vec_pollfd[i].revents & POLLRDNORM) {
-				cout << "POLLRDNORM in:" << i - 1 << endl;
+				// cout << "POLLRDNORM in:" << i - 1 << endl;
 				// _vec_pollfd[i].revents = 0;
 				// Parser	p1(_vec_pollfd[i].fd);
 				_accepts[i - 1]->on_data();
-				std::cout << "/* message */" << _accepts[i - 1]->desc << std::endl;
+				// std::cout << "/* message */" << _accepts[i - 1]->desc << std::endl;
 				_respondOne(*_accepts[i - 1]);
 				// _respondAll(_accepts[i - 1]);
 			}

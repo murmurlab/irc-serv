@@ -66,13 +66,13 @@ void	Parser::print_msg(Message &msg) {
 	if (msg.prefix.host)
 		os << "@" << *msg.prefix.host;
 	nextprint:
-	cout << "PREFIX:	" << os.str() << endl;
-	cout << "COMMAND:	" << msg.command << endl;
-	cout << "PARAMS" << endl;
+	cout << "	PREFIX:	" << os.str() << endl;
+	cout << "	COMMAND:	" << msg.command << endl;
+	cout << "	PARAMS" << endl;
 	for(size_t i = 0; i < msg.params.size(); i++) {
 		cout << "		[" << i << "]: " << msg.params[i] << endl;
 	}
-	cout << "TRAILING:	" << (msg.trailing ? *msg.trailing : "") << endl;
+	cout << "	TRAILING:	" << (msg.trailing ? *msg.trailing : "") << endl;
 }
 
 void	Parser::parse() {

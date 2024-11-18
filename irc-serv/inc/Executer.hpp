@@ -27,4 +27,6 @@ public:
 	void				execute();
 };
 
+# include "Client.hpp"
+
 #endif // EXECUTER_HPP

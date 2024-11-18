@@ -10,9 +10,8 @@
 using std::string;
 
 class	Parser;
-// class	Executer;
 
-typedef struct Client {
+class Client {
 private:
 	// std::list<IRC_msg>	&_msgs;
 public:
@@ -26,7 +25,7 @@ public:
 	socklen_t			len;
 						// Client(Client const &copy);
 						Client(int desc, struct sockaddr_in addr);
-}	Client;
+};
 
 
 #endif // CLIENT_HPP

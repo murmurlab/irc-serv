@@ -41,8 +41,13 @@ Message &_AUTH(Message &req,Message &retRequest)
 	{
 		if (req.params[x] == "PLAIN")
 			retRequest.params.push_back("+");
-		if (req.params[x] == "ZmZmAGZmZgAxMjM0")
+		if (req.params[x] == "ZmZmAGZmZgAxMjM0" ||
+			req.params[x] == "c2FzbG5pY2sAc2FzbG5pY2sAMTIzNA==")
 		{
+			// send these for CAP END
+			// S: :jaguar.test 900 jilles jilles!jilles@localhost.stack.nl jilles :You are now logged in as jilles
+			// S: :jaguar.test 903 jilles :SASL authentication successful
+			// then 001
 			retRequest.command = "001";
 			retRequest.params.clear();
 			if (!retRequest.trailing)
@@ -55,41 +60,80 @@ Message &_AUTH(Message &req,Message &retRequest)
 
 Message &_CAP(Message &msg, Message &res)
 {
+	res.command = "CAP";
+	if (msg.params.size() == 0) {
+		// no subcommand
+		res.prefix.host = new string("example.org");
+		res.params.push_back("410");
+		res.params.push_back("*");
+		res.params.push_back("");
+		res.trailing = new string("Invalid CAP command");
 
-	if (msg.command != "CAP")
-		return res;
-	else
-		res.command = "CAP";
-	res.params.push_back("*");
-	for (int x = 0; x < msg.params.size(); x++)
-	{
-		if (msg.params[x] == "LS")
-				res.params.push_back("LS"), \
-					res.trailing = new string("sasl");
-		if (msg.params[x++] == "REQ")
-		{
-			if (msg.params[x] != "sasl")
-			{
-				res.params.clear();
-				res.params.push_back("NAK");
-				if (res.trailing)
-					delete res.trailing , \
-						res.trailing = new string(msg.params[x]);
-				else
-					res.trailing = new string (msg.params[x]);
-			}
-			if (msg.params[x] == "sasl")
-			{
-				res.params.push_back("ACK");
-				if (res.trailing)
-					delete res.trailing , \
-						res.trailing = new string(msg.params[x]);
-				else
-					res.trailing = new string (msg.params[x]);
-			}
+		// res.prefix.host = new string("example.org");
+		// res.params.push_back("410");
+		// res.params.push_back("*");
+		// res.params.push_back(msg.params[0]);
+		// res.trailing = new string(":Invalid CAP command");
+		
+		// Server: :example.org 410 jw FOO :Invalid CAP command
+	} else if (msg.params[0] == "LS"/*  || msg.params[0] == "LIST" */) {
+		res.params.push_back("*");
+		res.params.push_back("LS");
+		if (msg.params.size() < 3) {
+			// no ver
+		} else if (msg.params[2] == "302") {
+			// ver 302
+		} else {
+			// unknown ver
+			// ver default=302
 		}
+		res.trailing = new std::string("sasl");
+	} else if (msg.params[0] == "REQ") {
+		// res.params.push_back("*");
+		// res.params.push_back("LS");
+		
+		if (msg.params.size() == 1) {
+			stringstream	trailing;
+			int				not_found = 1;
+			
+			trailing.str(*msg.trailing);
+			trailing.get();
+			for (string param; !trailing.eof();trailing >> param) {
+				trailing >> param;
+				if (param == "sasl") {
+					not_found = 0;
+				}
+			}
+			res.params.push_back("*");
+			if (not_found) {
+				res.params.push_back("NAK");
+				// merge all trail params
+				res.trailing = new string("-all caps-");
+			} else {
+				res.params.push_back("ACK");
+				res.trailing = new string("sasl");
+			}
+		} else if (msg.params.size() == 2) {
+			if (msg.params[1] == "sasl") {
+				res.params.push_back("ACK");
+				res.params.push_back("sasl");
+			} else {
+				res.params.push_back("NAK");
+				res.trailing = new string(msg.params[1]);
+				// non supported cap
+			}
+		} else if (msg.params.size() > 2) {
+			// unknown syntax
+		}
+	} else {
+		res.prefix.host = new string("example.org");
+		res.params.push_back("410");
+		res.params.push_back("*");
+		res.params.push_back(msg.params[0]);
+		res.trailing = new string("Invalid CAP command");
+		// Server: :example.org 410 jw FOO :Invalid CAP command
 	}
-	return (res);
+	return res;
 }
 
 void Executer::_matchAll(std::list<Message> &msgs) {
@@ -105,11 +149,12 @@ void Executer::_matchAll(std::list<Message> &msgs) {
 			// testResponse(_CAP(*msg, *res), _gls._desc);
 			_CAP(*msg, *res);
 		} else if (msg->command == "USER") {
+			_me.username = *(msg->params.end() - 1);
 			cout << "register user" << endl;
 		} else if (msg->command == "AUTHENTICATE")
-			_AUTH(*msg, *res);		
+			_AUTH(*msg, *res);
 		else {
-			responses.resize(responses.size() - 1);
+			res->command = "421";
 		}
 		msgs.pop_back();
 	}
@@ -129,7 +174,7 @@ int Executer::_matchOne(std::list<Message> &msgs) {
 	} else if (msg->command == "USER") {
 		cout << "register user" << endl;
 	} else if (msg->command == "AUTHENTICATE")
-		_AUTH(*msg, *res);		
+		_AUTH(*msg, *res);
 	else {
 		responses.resize(responses.size() - 1);
 	}
@@ -157,19 +202,20 @@ string Executer::_serialize(Message const &res) {
 		ret += res.params[x] + " ";
 	if (res.trailing)
 		ret += ":" + *res.trailing;
+	std::cout << "<" << "\"" << ret << "\"" << endl<< endl;
 	ret += "\r\n";
-	std::cout << "------------ " << ret << " -------" << endl;
 	return ret;
 	// write(_desc, ret.c_str(), strlen(ret.c_str()));
 
 	return "";
+	operator new[](3, NULL);
 }
 
 void	Executer::execute() {
 	try {
 		_parser.parse();
 	} catch (IRC_MsgIncomplate& e) {
-		cout << e.what() << ": Executer::execute(): IRC_MsgIncomplate" << endl;
+		cout << e.what() << ": Executer::execute(): IRC_MsgIncomplate" << endl<< endl;
 	}
 	// _matchAll(_parser.msgs);
 	while (_matchOne(_parser.msgs));
