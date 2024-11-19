@@ -24,6 +24,9 @@ public:
 	e_operation	opr;
 
 	string		receiver;
+	/* 
+		additional data fields
+	 */
 	
 	Message		msg;
 				Instruction(); // Default constructor, void instructions
