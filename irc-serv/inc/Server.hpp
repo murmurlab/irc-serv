@@ -72,6 +72,7 @@ public:
 	/* ==========================evaluator help funcs======================== */
 	bool						authorize(string const &pass);
 	bool						join_ch(Client &client, string const &channel);
+	Client						*getUserByX(string const &x);
 	/* ==========================evaluator help funcs======================== */
 	
 	void						pause();
