@@ -150,6 +150,28 @@ void Evaluator::_JOIN(Message &msg)
 	else
 		res.msg.trailing = msg.params[0];
 
+	res = newInstruction();
+	res.opr = VOID;
+	res.msg.command = "332";
+    res.msg.params.push_back(_me.nickname);
+    res.msg.params.push_back(msg.params[0]);
+    res.msg.trailing = "test channel";
+
+	res = newInstruction();
+    // Kanal üyeleri
+	res.opr = VOID;
+    res.msg.command = "353";
+    res.msg.params.push_back(_me.nickname);
+    res.msg.params.push_back("=");
+    res.msg.trailing = "testuser1 testuser2";
+
+    // Kanalın sonu
+	res = newInstruction();
+	res.opr = VOID;
+    res.msg.command = "366";
+    res.msg.params.push_back(_me.nickname);
+    res.msg.params.push_back(msg.params[0]);
+    res.msg.trailing = "End of /NAMES list.";
 	//EKLENCEKLER
 	// PARAMS[1] kısmıyla şifre gelebilir kanalları ayarlıyınca ele alınmalı
 	//KANALLAR AYARLANDIKTAN SONRA EKLENCEKLER
