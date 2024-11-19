@@ -131,6 +131,38 @@ void	Evaluator::_CAP(Message &msg)
 	return ;
 }
 
+void Evaluator::_JOIN(Message &msg)
+{
+	Instruction	&res = newInstruction();
+
+	res.opr = VOID;
+	res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+	res.msg.prefix.user = _me.username;
+	res.msg.prefix.nick = _me.nickname;
+	res.msg.command = "JOIN";
+	if (msg.params[0].empty())
+	{
+		res.msg.command = "462";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "Unauthorized command (already registered)";
+		return ;
+	}
+	else
+		res.msg.trailing = msg.params[0];
+
+	//EKLENCEKLER
+	// PARAMS[1] kısmıyla şifre gelebilir kanalları ayarlıyınca ele alınmalı
+	//KANALLAR AYARLANDIKTAN SONRA EKLENCEKLER
+	//:ServerName 332 Nick #kanal :Kanalın mevcut konusu
+	// :ServerName 353 Nick = #kanal :@User1 +User2 User3
+	//:ServerName 366 Nick #kanal :End of /NAMES list.
+
+	//ERROR
+	//:ServerName 403 Nick #kanal :No such channel
+	//:ServerName 475 Nick #kanal :Cannot join channel (+k)
+	//:ServerName 471 Nick #kanal :Cannot join channel (+l)
+}
+
 void	Evaluator::_PASS(Message &msg) {
 	Instruction	&res = newInstruction();
 
@@ -156,7 +188,54 @@ void	Evaluator::_PASS(Message &msg) {
 		inet_ntoa(_me.addr.sin_addr);
 }
 
-int Evaluator::_evalOne(std::list<Message> &msgs) {
+void Evaluator::_NOTICE(Message &msg)
+{
+	Instruction	&res = newInstruction();
+
+	res.opr = VOID;
+	res.msg.command = "NOTICE";
+	res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+	res.msg.params = msg.params;
+	res.msg.trailing = msg.trailing;
+}
+
+void Evaluator::_PING(Message &msg)
+{
+	Instruction	&res = newInstruction();
+
+	res.opr = VOID;
+	res.msg.command = "PONG";
+	res.msg.trailing = msg.trailing;
+	res.msg.prefix = msg.prefix;
+	res.msg.params = msg.params;
+
+}
+
+void Evaluator::_LIST(Message &msg)
+{
+	Instruction	&res = newInstruction();
+
+	res.opr = VOID;
+	res.msg.command = "LIST";
+	res.msg.params.push_back("#test");
+}
+
+void Evaluator::_QUIT(Message &msg)
+{
+	Instruction	&res = newInstruction();
+
+	res.opr = EMIT;
+	
+	res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+	res.msg.prefix.user = _me.username;
+	res.msg.prefix.nick = _me.nickname;
+	
+	res.msg.command = "QUIT";
+	res.msg.trailing = msg.trailing;
+}
+
+int Evaluator::_evalOne(std::list<Message> &msgs) 
+{
 	Message	*msg;
 
 	if (msgs.empty())
@@ -171,7 +250,18 @@ int Evaluator::_evalOne(std::list<Message> &msgs) {
 		// NICK(*msg, *res);
 	} else if (msg->command == "USER") {
 		// _USER(*msg, *res);
-	} else {
+	} else if (msg->command == "QUIT") {
+		_QUIT(*msg);
+	} else if (msg->command == "PING") {
+		_PING(*msg);
+	} else if (msg->command == "JOIN") {
+		_JOIN(*msg);
+	} else if (msg->command == "LIST") {
+		_LIST(*msg);
+	} else if (msg->command == "NOTICE") {
+		_NOTICE(*msg);
+	}
+	else {
 		_CMD_unknown(*msg);
 	}
 	msgs.pop_front();

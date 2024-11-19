@@ -26,11 +26,15 @@ class Evaluator {
 	void	_CAP_REQ(Message &msg);
 	void	_CAP_unk(Message &msg);
 	void	_CAP(Message &msg);
-
+	void	_JOIN(Message &msg);
 	void	_PASS(Message &msg);
-
+	void	_NOTICE(Message &msg);
+	void	_PING(Message &msg);
+	void	_LIST(Message &msg);
 	void	_CMD_needarg(Message &msg);
 	void	_CMD_unknown(Message &msg);
+
+	void	_QUIT(Message &msg);
 	int	_evalOne(std::list<Message> &msgs);
 public:
 	Instruction	&newInstruction();
