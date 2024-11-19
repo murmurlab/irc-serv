@@ -1,5 +1,5 @@
-#if !defined(PARSER_HPP)
-# define PARSER_HPP
+#if !defined(LEXER_HPP)
+# define LEXER_HPP
 
 # include <GetLineSegment.hpp>
 # include "Message.hpp"
@@ -10,10 +10,10 @@
 using std::string;
 
 typedef enum e_component {
-	PARSE_PREFIX,
-	PARSE_COMMND,
-	PARSE_PARAMS,
-	PARSE_UNKNWN
+	LEX_PREFIX,
+	LEX_COMMND,
+	LEX_PARAMS,
+	LEX_UNKNWN
 } e_component;
 
 typedef enum {
@@ -24,9 +24,9 @@ typedef enum {
 		UNKNOWNCMD
 }		e_cmd;
 
-class Parser
+class Lexer
 {
-	int							_sel_parser;
+	int							_sel_lexer;
 	GetLineSegment				_gls;
 	std::stringstream			_ss;
 	// typedef IRC_MsgIncomplate	IRC_MsgIncomplate;
@@ -37,15 +37,15 @@ class Parser
 	void						_token_command();
 	void						_token_params();
 	void						_token_unknown();
-	void						_lexer();
+	void						_tokenize();
 	void						print_msg(Message &msg);
 	// Message						&_AUTH(Message &req,Message &retRequest);
 	// Message						&_CAP(Message &req, Message &retRequest);
 public:
 	std::list<Message>			msgs;
-	void						parse();
-								Parser(int desc_of_gls);
+	void						lex();
+								Lexer(int desc_of_gls);
 };
 
 
-#endif // PARSER_HPP
+#endif // LEXER_HPP

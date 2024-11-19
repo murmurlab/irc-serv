@@ -1,6 +1,8 @@
 #include "Server.hpp"
 #include "Client.hpp"
-#include "Parser.hpp"
+#include "Instruction.hpp"
+#include "Lexer.hpp"
+#include "Message.hpp"
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -116,19 +118,27 @@ static void	write_data(int desc, string const &line) {
 	write(desc, line.c_str(), line.length());
 }
 
-void	Server::_respondOne(Client &receiver) {
-	if (receiver._executer.responses.empty())
-		return ;
-	Message const	&res_msg = receiver._executer.responses.back();
-	string const	&res_raw = receiver._executer._serialize(res_msg);
-	Client			*sender;
-	// if (res_msg.prefix.u)
-	write_data(receiver.desc, res_raw);
-	// for (std::vector<class Client *>::size_type i = 0; i < _accepts.size(); i++) {
-	// 	if (_accepts[i]->username == *res_msg.prefix.user) {
-	// 		write_data(receiver.desc, res_raw);
-	// }
-	receiver._executer.responses.pop_back();
+bool	Server::_resolveOne(Client &receiver) {
+	// responses -> jobs
+	if (receiver._evaluator.promises.empty())
+		return false;
+	Instruction		&res_msg = receiver._evaluator.promises.back();
+	cout << "promise: " << res_msg.opr << "comm: " << res_msg.msg.command << endl;
+	if (res_msg.opr == VOID) {
+
+	} else if (res_msg.opr == SEND) {
+		cout << "SEND" << endl;
+		string			res_raw = Message::_serialize(res_msg.msg);
+		Client			*sender;
+		// if (res_msg.prefix.u)
+		write_data(receiver.desc, res_raw);
+		// for (std::vector<class Client *>::size_type i = 0; i < _accepts.size(); i++) {
+		// 	if (_accepts[i]->username == *res_msg.prefix.user) {
+		// 		write_data(receiver.desc, res_raw);
+		// }
+	}
+	receiver._evaluator.promises.pop_back();
+	return true;
 }
 
 Server::~Server() {
@@ -167,7 +177,7 @@ Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)),
 				// Parser	p1(_vec_pollfd[i].fd);
 				_accepts[i - 1]->on_data();
 				// std::cout << "/* message */" << _accepts[i - 1]->desc << std::endl;
-				_respondOne(*_accepts[i - 1]);
+				while(_resolveOne(*_accepts[i - 1]));
 				// _respondAll(_accepts[i - 1]);
 			}
 		}

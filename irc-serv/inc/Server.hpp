@@ -25,7 +25,7 @@
 # include <cerrno>
 # include <cstdlib>
 
-# include "Parser.hpp"
+# include "Lexer.hpp"
 # include "Client.hpp"
 
 using std::endl;
@@ -55,8 +55,9 @@ private:
 	socklen_t					_listen_len;
 	
 	std::vector<class Client *>	_accepts;
+	// vector<Channel>				_channels;
 
-	void						_respondOne(Client &responder);
+	bool						_resolveOne(Client &responder);
 	// void						_respond();
 	void						_update_pollfd();
 	void						_add_accept();

@@ -26,7 +26,7 @@ string *GetLineSegment::get_line_segment() {
 			throw ewouldblock("read(): -1");
 		if (_res_len == 0) {
 			std::cerr << "read(): 0" << endl;
-			throw std::runtime_error("read(): 0");
+			throw std::runtime_error("read(): 0"); // client hang up
 		}
 		_left = (_left + buff);
 		_d_pos = _left.find(_d_sub);

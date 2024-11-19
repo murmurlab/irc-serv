@@ -1,7 +1,7 @@
 #include "Client.hpp"
 
 Client::Client(int desc_, struct sockaddr_in addr_):
-	_parser(desc_), _executer(_parser, *this), desc(desc_), addr(addr_),
+	_lexer(desc_), _evaluator(_lexer, *this), desc(desc_), addr(addr_),
 	len(sizeof(addr_))
 	{
 }
@@ -12,6 +12,5 @@ Client::Client(int desc_, struct sockaddr_in addr_):
 // }
 
 void	Client::on_data() {
-	_executer.execute();
+	_evaluator.eval();
 }
-

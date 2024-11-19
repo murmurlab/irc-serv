@@ -10,17 +10,19 @@ using std::vector;
 
 class Message {
 public:
-	string				receiver;
 	struct s_prefix {
-		string	*nick;
-		string	*user;
-		string	*host;
+		string	nick;
+		string	user;
+		string	host;
 	}					prefix;
 	string				command;
 	std::vector<string>	params;
-	string				*trailing;
+	string				trailing;
 						Message();
 						~Message();
+
+	static string		_serialize(Message &res);
+
 };
 
 #endif // MESSAGE_HPP

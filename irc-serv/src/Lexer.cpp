@@ -1,13 +1,13 @@
-#include "Parser.hpp"
+#include "Lexer.hpp"
 #include "Client.hpp"
 #include <algorithm>
 #include <string>
 
-void	Parser::_token_commmon() {
-	_sel_parser++;
+void	Lexer::_token_commmon() {
+	_sel_lexer++;
 }
 
-void	Parser::_token_prefix() {
+void	Lexer::_token_prefix() {
 	string	prefix;
 	
 	_token_commmon();
@@ -17,55 +17,54 @@ void	Parser::_token_prefix() {
 	_ss >> prefix;
 	string::iterator i1 = std::find(prefix.begin(), prefix.end(), '@');
 	if (i1 == prefix.end()) {
-		_msg->prefix.nick = new string(prefix.begin() + 1, prefix.end());
+		_msg->prefix.nick.assign(prefix.begin() + 1, prefix.end());
 		return ;
 	}
 	string::iterator i2 = std::find(prefix.begin(), prefix.end(), '!');
 	if (i2 == prefix.end()) {
-		_msg->prefix.nick = new string(prefix.begin() + 1, i2);
+		_msg->prefix.nick.assign(prefix.begin() + 1, i2);
 		_msg->prefix.host = _msg->prefix.nick;
 		return ;
 	}
-	_msg->prefix.nick = new string(prefix.begin() + 1, i2);
-	_msg->prefix.user = new string(i2 + 1, i1);
-	_msg->prefix.host = new string(i1 + 1, prefix.end());
+	_msg->prefix.nick.assign(prefix.begin() + 1, i2);
+	_msg->prefix.user.assign(i2 + 1, i1);
+	_msg->prefix.host.assign(i1 + 1, prefix.end());
 }
 
-void	Parser::_token_command() {
+void	Lexer::_token_command() {
 	_token_commmon();
 	_ss >> _msg->command;
 }
 
 // :nick!user@host CAP LS 300 :sasl
-void	Parser::_token_params() {
+void	Lexer::_token_params() {
 	// _token_commmon();
 	string	a_param;
 	_ss.get();
 	if (_ss.rdbuf()->sgetc() == ':') {
-		_msg->trailing = new string;
 		_ss.get();
-		std::getline(_ss, *_msg->trailing, '\0');
+		std::getline(_ss, _msg->trailing, '\0');
 	} else {
 		_ss >> a_param;
 		_msg->params.push_back(a_param);
 	}
 }
-void	Parser::_token_unknown() {
+void	Lexer::_token_unknown() {
 	// _sel_parser = PARSE_PREFIX;;
 	// cout << "unknown" << endl;
 	// cout << _ss.rdbuf() << endl;
 }
 
-void	Parser::print_msg(Message &msg) {
+void	Lexer::print_msg(Message &msg) {
 	std::ostringstream	os;
 	
-	if (!msg.prefix.nick)
+	if (msg.prefix.nick.empty())
 		goto nextprint;
-	os << *msg.prefix.nick;
-	if (msg.prefix.user)
-		os << "!" << *msg.prefix.user;
-	if (msg.prefix.host)
-		os << "@" << *msg.prefix.host;
+	os << msg.prefix.nick;
+	if (!msg.prefix.user.empty())
+		os << "!" << msg.prefix.user;
+	if (!msg.prefix.host.empty())
+		os << "@" << msg.prefix.host;
 	nextprint:
 	cout << "	PREFIX:	" << os.str() << endl;
 	cout << "	COMMAND:	" << msg.command << endl;
@@ -73,14 +72,14 @@ void	Parser::print_msg(Message &msg) {
 	for(size_t i = 0; i < msg.params.size(); i++) {
 		cout << "		[" << i << "]: " << msg.params[i] << endl;
 	}
-	cout << "	TRAILING:	" << (msg.trailing ? *msg.trailing : "") << endl;
+	cout << "	TRAILING:	" << (!msg.trailing.empty() ? msg.trailing : "") << endl;
 }
 
-void	Parser::parse() {
-	_lexer();
+void	Lexer::lex() {
+	_tokenize();
 }
 
-void Parser::_lexer()
+void Lexer::_tokenize()
 {
     while (2) {
 		// sleep(1);
@@ -98,14 +97,14 @@ void Parser::_lexer()
 		while (!_ss.eof()) {
 			// cout << _sel_parser << "======================================WHILE======================================" << endl;
 			usleep(100000);
-			switch (_sel_parser) {
-			case PARSE_PREFIX:
+			switch (_sel_lexer) {
+			case LEX_PREFIX:
 				_token_prefix();
 				break ;
-			case PARSE_COMMND:
+			case LEX_COMMND:
 				_token_command();
 				break ;
-			case PARSE_PARAMS:
+			case LEX_PARAMS:
 				_token_params();
 				break ;
 			default:
@@ -113,7 +112,7 @@ void Parser::_lexer()
 				break ;
 			}
 		}
-		_sel_parser = PARSE_PREFIX;;
+		_sel_lexer = LEX_PREFIX;;
 		_ss.clear();
 
 
@@ -145,7 +144,7 @@ void Parser::_lexer()
 	// }
 }
 
-Parser::Parser(int desc): _gls(desc), _sel_parser(PARSE_PREFIX) {
+Lexer::Lexer(int desc): _gls(desc), _sel_lexer(LEX_PREFIX) {
 
 }
 

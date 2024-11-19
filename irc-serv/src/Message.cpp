@@ -1,14 +1,24 @@
 #include "Message.hpp"
 #include <iostream>
 
-Message::Message(): trailing(NULL) {
-	// std::cout << "Message construct" << std::endl;
-	std::memset(&prefix, 0, sizeof(prefix));
+using std::endl;
+
+Message::Message() {
+  // std::cout << "Message construct" << std::endl;
 }
 
 Message::~Message() {
-	delete trailing;
-	delete prefix.nick;
-	delete prefix.user;
-	delete prefix.host;
+}
+
+string Message::_serialize(Message &res) {
+	string ret;
+	if (!res.command.empty())
+		ret += res.command + " ";
+	for (int x = 0; x < res.params.size(); x++)
+		ret += res.params[x] + " ";
+	if (!res.trailing.empty())
+		ret += ":" + res.trailing;
+        std::cout << "<" << "\"" << ret << "\"" << endl << endl;
+        ret += "\r\n";
+	return ret;
 }

@@ -4,21 +4,25 @@
 # include <string>
 # include <netinet/in.h>
 
-# include "Parser.hpp"
-# include "Executer.hpp"
+# include "Lexer.hpp"
+# include "Evaluator.hpp"
 
 using std::string;
 
-class	Parser;
+class	Lexer;
 
 class Client {
 private:
 	// std::list<IRC_msg>	&_msgs;
 public:
-	Parser				_parser;
-	Executer			_executer;
+	Lexer				_lexer;
+	Evaluator			_evaluator;
 
+	// int					authenticate();
+	bool				is_authz;
 	string				username;
+	string				nickname;
+	
 	void				on_data();
 	int					desc;
 	struct sockaddr_in	addr;
