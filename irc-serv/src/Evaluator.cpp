@@ -264,27 +264,22 @@ int Evaluator::_evalOne(std::list<Message> &msgs)
 		return 0;
 	msg = &(msgs.front());
 	
-	if (msg->command == "CAP") {
-		_CAP(*msg);
-	} else if (msg->command == "PASS") {
-		_PASS(*msg);
-	} else if (msg->command == "NICK") {
-		// NICK(*msg, *res);
-	} else if (msg->command == "USER") {
-		// _USER(*msg, *res);
-	} else if (msg->command == "QUIT") {
-		_QUIT(*msg);
-	} else if (msg->command == "PING") {
-		_PING(*msg);
-	} else if (msg->command == "JOIN") {
-		_JOIN(*msg);
-	} else if (msg->command == "LIST") {
-		_LIST(*msg);
-	} else if (msg->command == "NOTICE") {
-		_NOTICE(*msg);
-	}
-	else {
-		_CMD_unknown(*msg);
+	void (Evaluator::*funcs[])(Message &msg) = {&Evaluator::_CAP, &Evaluator::_PASS,\
+	&Evaluator::_QUIT, &Evaluator::_PING, &Evaluator::_JOIN, &Evaluator::_LIST, &Evaluator::_NOTICE};
+	std::string cmds[] = {"CAP", "PASS", "QUIT", "PING", "JOIN", "LIST", "NOTICE"};
+
+	for (int x = 0; x < sizeof(cmds) / sizeof(cmds[0]); x++)
+	{
+		if (x == sizeof(cmds) / sizeof(cmds[0]))
+    	{
+        	_CMD_unknown(*msg);
+        	break;
+    	}
+    	if (msg->command == cmds[x])
+    	{
+        	(this->*funcs[x])(*msg);
+        	break;
+    	}
 	}
 	msgs.pop_front();
 	return 1;
