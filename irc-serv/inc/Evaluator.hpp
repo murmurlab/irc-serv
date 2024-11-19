@@ -17,6 +17,7 @@ class	Message;
 class	Client;
 
 class Evaluator {
+	Client					&_me;
 	Lexer					&_lexer;
 	
 	void	_CAP_END(Message &msg);
