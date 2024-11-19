@@ -36,6 +36,8 @@ using std::cerr;
 
 # define PORT_NUM	4445
 
+# define _IRC_E_ARG	"Usage ABNF: ./ircserv SHORT_INT \" \" *ALPHA"
+
 # define CAP_SASL		"sasl"
 
 # define S_Q_CAP_LS_302	"CAP LS 302"

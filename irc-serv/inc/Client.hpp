@@ -10,16 +10,18 @@
 using std::string;
 
 class	Lexer;
+class	Server;
 
 class Client {
 private:
 	// std::list<IRC_msg>	&_msgs;
-public:
+	friend class Evaluator;
 	Lexer				_lexer;
+	Server				&_server;
+public:
 	Evaluator			_evaluator;
 
-	// int					authenticate();
-	bool				is_authz;
+	bool				authorized;
 	string				username;
 	string				nickname;
 	
@@ -28,7 +30,7 @@ public:
 	struct sockaddr_in	addr;
 	socklen_t			len;
 						// Client(Client const &copy);
-						Client(int desc, struct sockaddr_in addr);
+						Client(int desc, struct sockaddr_in addr, Server &server);
 };
 
 

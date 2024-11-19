@@ -2,6 +2,7 @@ CC				= c++
 
 LXXFLAGS		= 
 RUNFLAGS		=
+# MAKEFLAGS +=			-j$(NPROCS)
 
 EXE_DIR			= 
 ROOT			= irc-serv/
@@ -63,7 +64,7 @@ $(NAME): $(OBJS) $(CMD_IRCSERV) $(INCS)
 $(TEST): $(OBJS) $(CMD_IRCTEST) $(INCS)
 	$(CC) $(LXXFLAGS) $(CMD_IRCTEST) $(OBJS) -o $(TEST)
 run: all
-	$(RUNFLAGS) ./$(NAME) $(args)
+	$(RUNFLAGS) ./$(NAME) 6667 arst $(args)
 test: all
 	$(RUNFLAGS) ./$(TEST) $(args)
 down:

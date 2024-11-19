@@ -2,6 +2,7 @@
 # define EVALUATOR_HPP
 
 #include "Instruction.hpp"
+// #include "Server.hpp"
 # include <string>
 # include <iostream>
 # include <list>
@@ -25,6 +26,8 @@ class Evaluator {
 	void	_CAP_REQ(Message &msg);
 	void	_CAP_unk(Message &msg);
 	void	_CAP(Message &msg);
+
+	void	_PASS(Message &msg);
 
 	void	_CMD_needarg(Message &msg);
 	void	_CMD_unknown(Message &msg);

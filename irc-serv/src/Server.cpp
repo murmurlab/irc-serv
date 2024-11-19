@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <ios>
 #include <netinet/in.h>
 #include <string>
 #include <sys/_types/_socklen_t.h>
@@ -109,7 +110,7 @@ void	Server::_add_accept() {
 	test_input(desc);
 	new_pollfd.fd = desc;
 	new_pollfd.events = POLLRDNORM | POLLHUP;
-	_accepts.push_back(new Client(desc, addr));
+	_accepts.push_back(new Client(desc, addr, *this));
 	_vec_pollfd.push_back(new_pollfd);
 	// _update_pollfd();
 }
@@ -122,23 +123,30 @@ bool	Server::_resolveOne(Client &receiver) {
 	// responses -> jobs
 	if (receiver._evaluator.promises.empty())
 		return false;
-	Instruction		&res_msg = receiver._evaluator.promises.back();
-	cout << "promise: " << res_msg.opr << "comm: " << res_msg.msg.command << endl;
-	if (res_msg.opr == VOID) {
-
-	} else if (res_msg.opr == SEND) {
-		cout << "SEND" << endl;
-		string			res_raw = Message::_serialize(res_msg.msg);
-		Client			*sender;
-		// if (res_msg.prefix.u)
-		write_data(receiver.desc, res_raw);
-		// for (std::vector<class Client *>::size_type i = 0; i < _accepts.size(); i++) {
-		// 	if (_accepts[i]->username == *res_msg.prefix.user) {
-		// 		write_data(receiver.desc, res_raw);
-		// }
+	Instruction		&res_msg = receiver._evaluator.promises.front();
+	cout << "promise: " << res_msg.opr << "comm: " << res_msg.msg.command << "[" << endl;
+	switch (res_msg.opr) {
+		case EMIT:
+			break;
+		case SEND:
+			cout << "SEND" << endl;
+			// if (res_msg.prefix.u)
+			write_data(receiver.desc, Message::_serialize(res_msg.msg));
+			// for (std::vector<class Client *>::size_type i = 0; i < _accepts.size(); i++) {
+			// 	if (_accepts[i]->username == *res_msg.prefix.user) {
+			// 		write_data(receiver.desc, res_raw);
+			// }
+			break;
+		case VOID:
+			break;
 	}
-	receiver._evaluator.promises.pop_back();
+	cout << "]" << "promised!" << endl;
+	receiver._evaluator.promises.pop_front();
 	return true;
+}
+
+bool	Server::authorize(string const &pass) {
+	return pass == this->pass;
 }
 
 Server::~Server() {
@@ -146,8 +154,8 @@ Server::~Server() {
 		delete _accepts.back();
 }
 
-Server::Server(string host, t_port port): _listen_len(sizeof(_listen_addr)), 
-	_listen_desc(-1) {
+Server::Server(string host, t_port port, string pass): _listen_len(sizeof(_listen_addr)), 
+	_listen_desc(-1), pass(pass) {
 	nfds_t	poll_ed;
 
 	_listen(inet_addr(host.c_str()), htons(port));

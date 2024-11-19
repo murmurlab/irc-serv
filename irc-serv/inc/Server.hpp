@@ -1,3 +1,5 @@
+#include "Evaluator.hpp"
+#include <string>
 #if !defined(SERVER_HPP)
 # define SERVER_HPP
 
@@ -53,18 +55,27 @@ private:
 	int							_listen_desc;
 	struct sockaddr_in			_listen_addr;
 	socklen_t					_listen_len;
-	
+
+	string						pass;
+
 	std::vector<class Client *>	_accepts;
 	// vector<Channel>				_channels;
 
 	bool						_resolveOne(Client &responder);
 	// void						_respond();
+
+	
 	void						_update_pollfd();
 	void						_add_accept();
 	void						_listen(in_addr_t host, in_port_t port);
 public:
+	/* ==========================evaluator help funcs======================== */
+	bool						authorize(string const &pass);
+	bool						join_ch(Client &client, string const &channel);
+	/* ==========================evaluator help funcs======================== */
+	
 	void						pause();
-								Server(string host, t_port port);
+								Server(string host, t_port port, string pass);
 								~Server();
 } Server;
 

@@ -1,7 +1,10 @@
 #include "Evaluator.hpp"
 #include "Instruction.hpp"
 #include "Message.hpp"
+#include "Server.hpp"
 #include "Lexer.hpp"
+#include <arpa/inet.h>
+#include <unistd.h>
 
 Evaluator::Evaluator(Lexer &lexer_, Client &me_): _lexer(lexer_), _me(me_) {
 
@@ -25,6 +28,7 @@ void	Evaluator::_CMD_needarg(Message &msg) {
 void	Evaluator::_CMD_unknown(Message &msg) {
 	Instruction	&res = newInstruction();
 
+	res.opr = SEND;
 	res.msg.prefix.host = "source-of-server";
 	res.msg.command = "421";
 	res.msg.params.push_back(_me.nickname);
@@ -127,16 +131,42 @@ void	Evaluator::_CAP(Message &msg)
 	return ;
 }
 
+void	Evaluator::_PASS(Message &msg) {
+	Instruction	&res = newInstruction();
+
+	res.opr = SEND;
+	if (_me.authorized) {
+		res.msg.command = "462";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "Unauthorized command (already registered)";
+		return ;
+	}
+	_me.authorized = _me._server.authorize(msg.trailing);
+	if (!_me.authorized) {
+		res.msg.command = "464";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "Password incorrect";
+		return ;
+	}
+	res.msg.command = "001";
+	res.msg.params.push_back(_me.nickname);
+	res.msg.trailing = res.msg.trailing +
+		"Welcome to the Internet Relay Network " +
+		_me.nickname + "!" + _me.username + "@" +
+		inet_ntoa(_me.addr.sin_addr);
+}
+
 int Evaluator::_evalOne(std::list<Message> &msgs) {
 	Message	*msg;
 
 	if (msgs.empty())
 		return 0;
 	msg = &(msgs.front());
+	
 	if (msg->command == "CAP") {
 		_CAP(*msg);
 	} else if (msg->command == "PASS") {
-		// _PASS(*msg, *res);
+		_PASS(*msg);
 	} else if (msg->command == "NICK") {
 		// NICK(*msg, *res);
 	} else if (msg->command == "USER") {
@@ -149,11 +179,12 @@ int Evaluator::_evalOne(std::list<Message> &msgs) {
 }
 
 void	Evaluator::eval() {
-	try {
-		_lexer.lex();
-	} catch (IRC_MsgIncomplate& e) {
-		cout << e.what() << ": Evaluator::eval(): IRC_MsgIncomplate" << endl<< endl;
-	}
+	
+	// try {
+	// 	_lexer.lex();
+	// } catch (IRC_MsgIncomplate& e) {
+	// 	cout << e.what() << ": Evaluator::eval(): IRC_MsgIncomplate" << endl<< endl;
+	// }
 	// _matchAll(_parser.msgs);
 	while (_evalOne(_lexer.msgs));
 }

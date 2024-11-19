@@ -3,15 +3,18 @@
 #include "irc.hpp"
 
 int main(int argc, char const *argv[]) try {
-	// if (argc != 3)
-	// 	throw (runtime_error(E_ARG));
-	// t_irc	irc = {
-	// 	.s_q_matcher = {
-	// 		[Q_CAP_LS_302] = S_Q_CAP_LS_302,
+	std::istringstream iss (argv[1]);
 
-	// 	}
-	// };
-	Server	s1("127.0.0.1", 4445);
+	if (argc != 3)
+		throw (runtime_error(_IRC_E_ARG));
+	int port;
+	if (!(iss >> port))
+		throw (runtime_error(_IRC_E_ARG));
+	if (port < 1024 || port > 65535)
+		throw (runtime_error(_IRC_E_ARG));
+
+	cout << "port: " << port << " pass: " << argv[2] << endl;
+	Server	s1("127.0.0.1", port, argv[2]);
 	s1.~Server();
 	// create_socket();
 	return 0;

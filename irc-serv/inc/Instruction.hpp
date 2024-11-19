@@ -11,10 +11,7 @@ using std::vector;
 
 typedef enum e_operation
 {
-	REGISTER,
 	EMIT,
-	AUTH,
-	JOIN,
 	SEND,
 	VOID
 }			e_operation;
