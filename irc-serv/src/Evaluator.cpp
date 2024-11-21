@@ -1,9 +1,13 @@
 #include "Evaluator.hpp"
+#include "Channel.hpp"
 #include "Instruction.hpp"
 #include "Message.hpp"
 #include "Server.hpp"
 #include "Lexer.hpp"
 #include <arpa/inet.h>
+#include <cstddef>
+#include <sstream>
+#include <string>
 #include <unistd.h>
 
 Evaluator::Evaluator(Lexer &lexer_, Client &me_): _lexer(lexer_), _me(me_) {
@@ -131,47 +135,101 @@ void	Evaluator::_CAP(Message &msg)
 	return ;
 }
 
-void Evaluator::_JOIN(Message &msg)
-{
-	Instruction	&res = newInstruction();
+void Evaluator::_JOIN(Message &msg) {
+	stringstream	keys;
+	stringstream	channels;
+	string			channel;
+	string			key;
+	int	has_key;
 
-	res.opr = VOID;
-	res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
-	res.msg.prefix.user = _me.username;
-	res.msg.prefix.nick = _me.nickname;
-	res.msg.command = "JOIN";
-	if (msg.params[0].empty())
-	{
-		res.msg.command = "462";
-		res.msg.params.push_back(_me.nickname);
-		res.msg.trailing = "Unauthorized command (already registered)";
+	has_key = 0;
+	if (msg.params.size() == 0) {
+		_CMD_needarg(msg);
 		return ;
 	}
-	else
-		res.msg.trailing = msg.params[0];
+	if (msg.params.size() > 1) {
+		has_key = 1;
+		keys.str(msg.params[1]);
+	}
+	channels.str(msg.params[0]);
+	while (getline(channels, channel, ',')) {
+		cout << "channel: " << channel << " key: " << key << endl;
+		switch (has_key) {
+			case 1: if (getline(keys, key, ','));else has_key = 0;
+		}
+		{
+			Instruction	&res = newInstruction();
+			res.opr = SEND;
+			res.msg.prefix.host = inet_ntoa(_me._server._listen_addr.sin_addr);
+			res.msg.params.push_back(_me.nickname);
+			res.msg.params.push_back(channel);
+			switch (_me._server.join_ch(_me, channel, key)) {
+				case SUCCESS: // emit or reply ???
+				cout << "channel: " << channel << " key: " << key << endl;
+				res.msg.prefix.nick = _me.nickname;
+				res.msg.prefix.user = _me.username;
+				res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+				res.msg.params.erase(res.msg.params.begin());
+				res.msg.command = "JOIN";
+				break ;
+				case ERR_NOSUCHCHANNEL:
+				res.msg.command = "403";
+				res.msg.trailing = "No such channel";
+				break ;
+				case ERR_BADCHANNELKEY:
+				res.msg.command = "475";
+				res.msg.trailing = "Cannot join channel (+k)";
+				break ;
+				case ERR_CHANNELISFULL:
+				res.msg.command = "471";
+				res.msg.trailing = "Cannot join channel (+l)";
+				break ;
+				case ERR_INVITEONLYCHAN:
+				res.msg.command = "473";
+				res.msg.trailing = "Cannot join channel (+i)";
+				break ;
+			}
+		}
+	}
+}
+	// res.opr = SEND;
+	// res.msg.prefix.nick = _me.nickname;
+	// res.msg.prefix.user = _me.username;
+	// res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+	// res.msg.command = "JOIN";
+	// if (msg.params[0].empty())
+	// {
+	// 	res.msg.command = "462";
+	// 	res.msg.params.push_back(_me.nickname);
+	// 	res.msg.trailing = "Unauthorized command (already registered)";
+	// 	return ;
+	// }
+	// else
+	// 	res.msg.trailing = msg.params[0];
 
-	res = newInstruction();
-	res.opr = VOID;
-	res.msg.command = "332";
-    res.msg.params.push_back(_me.nickname);
-    res.msg.params.push_back(msg.params[0]);
-    res.msg.trailing = "test channel";
+	// Instruction	&res2 = newInstruction();
+	// res2.opr = VOID;
+	// res2.msg.command = "332";
+    // res2.msg.params.push_back(_me.nickname);
+    // res2.msg.params.push_back(msg.params[0]);
+    // res2.msg.trailing = "test channel";
 
-	res = newInstruction();
-    // Kanal üyeleri
-	res.opr = VOID;
-    res.msg.command = "353";
-    res.msg.params.push_back(_me.nickname);
-    res.msg.params.push_back("=");
-    res.msg.trailing = "testuser1 testuser2";
+	// Instruction	&res3 = newInstruction();
+    // // Kanal üyeleri
+	// res3.opr = VOID;
+    // res3.msg.command = "353";
+    // res3.msg.params.push_back(_me.nickname);
+    // res3.msg.params.push_back("=");
+    // res3.msg.trailing = "testuser1 testuser2";
 
-    // Kanalın sonu
-	res = newInstruction();
-	res.opr = VOID;
-    res.msg.command = "366";
-    res.msg.params.push_back(_me.nickname);
-    res.msg.params.push_back(msg.params[0]);
-    res.msg.trailing = "End of /NAMES list.";
+    // // Kanalın sonu
+	// Instruction res4 = newInstruction();
+	// res4.opr = VOID;
+    // res4.msg.command = "366";
+    // res4.msg.params.push_back(_me.nickname);
+    // res4.msg.params.push_back(msg.params[0]);
+    // res4.msg.trailing = "End of /NAMES list.";
+
 	//EKLENCEKLER
 	// PARAMS[1] kısmıyla şifre gelebilir kanalları ayarlıyınca ele alınmalı
 	//KANALLAR AYARLANDIKTAN SONRA EKLENCEKLER
@@ -183,9 +241,14 @@ void Evaluator::_JOIN(Message &msg)
 	//:ServerName 403 Nick #kanal :No such channel
 	//:ServerName 475 Nick #kanal :Cannot join channel (+k)
 	//:ServerName 471 Nick #kanal :Cannot join channel (+l)
-}
+
 
 void	Evaluator::_PASS(Message &msg) {
+	if (msg.params.size() == 0 && msg.trailing.empty()) {
+		_CMD_needarg(msg);
+		return ;
+	}
+	// cout << "PASSssss" << endl;
 	Instruction	&res = newInstruction();
 
 	res.opr = SEND;
@@ -202,6 +265,7 @@ void	Evaluator::_PASS(Message &msg) {
 		res.msg.trailing = "Password incorrect";
 		return ;
 	}
+	_me.authorized = 1;
 	res.msg.command = "001";
 	res.msg.params.push_back(_me.nickname);
 	res.msg.trailing = res.msg.trailing +
@@ -268,15 +332,26 @@ int Evaluator::_evalOne(std::list<Message> &msgs)
 	&Evaluator::_QUIT, &Evaluator::_PING, &Evaluator::_JOIN, &Evaluator::_LIST, &Evaluator::_NOTICE};
 	std::string cmds[] = {"CAP", "PASS", "QUIT", "PING", "JOIN", "LIST", "NOTICE"};
 
+	switch (_me.authorized) {
+		case 0:
+		if (msg->command != "PASS") {
+			if (msg->command != "CAP" && msg->command != "PING") {
+				// not authorized
+				cout << "not authorized: " << msg->command << endl;
+				msgs.pop_front();
+				return 1;
+			}
+		}
+		break;
+	}
 	for (int x = 0; x < sizeof(cmds) / sizeof(cmds[0]); x++)
 	{
-		if (x == sizeof(cmds) / sizeof(cmds[0]))
-    	{
+		// cout << "x: " << x << " cmd: " << cmds[x] << " msg: " << msg->command << endl;
+		if (x == sizeof(cmds) / sizeof(cmds[0])){
         	_CMD_unknown(*msg);
         	break;
     	}
-    	if (msg->command == cmds[x])
-    	{
+    	if (msg->command == cmds[x]) {
         	(this->*funcs[x])(*msg);
         	break;
     	}

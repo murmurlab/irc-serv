@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Channel.hpp"
 #include "Client.hpp"
 #include "Instruction.hpp"
 #include "Lexer.hpp"
@@ -147,6 +148,37 @@ bool	Server::_resolveOne(Client &receiver) {
 
 bool	Server::authorize(string const &pass) {
 	return pass == this->pass;
+}
+
+Channel	*Server::getChannelByX(string &channel) {
+	for (std::vector<Channel *>::size_type i = 0; i < _channels.size(); i++) {
+		if (_channels[i]->name == channel)
+			return _channels[i];
+	}
+	return NULL;
+}
+
+e_err_reply	Server::join_ch(Client &client, string &channel, string &key) {
+	Channel		*ch;
+	
+	
+	ch = getChannelByX(channel);
+	if (channel[0] != '&')
+		return ERR_NOSUCHCHANNEL;
+	if (ch == NULL) {
+		ch = new Channel(client, channel);
+		_channels.push_back(ch);
+		client.chs.push_back(ch);
+	}
+	if (ch->limitted && ch->clients.size() >= ch->limit)
+		return ERR_CHANNELISFULL;
+	if (ch->invite_only)
+		return ERR_INVITEONLYCHAN;
+	if (!key.empty() && ch->pass != key)
+		return ERR_BADCHANNELKEY;
+	ch->clients.push_back(&client);
+	client.chs.push_back(ch);
+	return SUCCESS;
 }
 
 Server::~Server() {

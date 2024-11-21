@@ -8,6 +8,13 @@
 # include <list>
 
 // #include "Message.hpp"
+typedef enum e_err_reply {
+	SUCCESS = 0,
+	ERR_NOSUCHCHANNEL = 403,
+	ERR_BADCHANNELKEY = 475,
+	ERR_CHANNELISFULL = 471,
+	ERR_INVITEONLYCHAN = 473
+}	e_err_reply;
 
 using std::string;
 using std::endl;

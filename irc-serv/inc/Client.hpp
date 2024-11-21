@@ -4,6 +4,7 @@
 # include <string>
 # include <netinet/in.h>
 
+# include "Channel.hpp"
 # include "Lexer.hpp"
 # include "Evaluator.hpp"
 
@@ -21,7 +22,10 @@ private:
 public:
 	Evaluator			_evaluator;
 
-	bool				authorized;
+	// vector<Channel *>	mod_chs;
+	vector<class Channel *>	chs;
+
+	int					authorized;
 	string				username;
 	string				nickname;
 	

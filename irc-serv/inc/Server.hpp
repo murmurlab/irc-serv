@@ -1,3 +1,4 @@
+#include "Channel.hpp"
 #include "Evaluator.hpp"
 #include <string>
 #if !defined(SERVER_HPP)
@@ -50,16 +51,15 @@ typedef struct Server {
 private:
 	struct addrinfo				_addrinfo;
 
-	std::vector<struct pollfd>	_vec_pollfd;
+	vector<struct pollfd>	_vec_pollfd;
 	
 	int							_listen_desc;
-	struct sockaddr_in			_listen_addr;
 	socklen_t					_listen_len;
 
 	string						pass;
 
-	std::vector<class Client *>	_accepts;
-	// vector<Channel>				_channels;
+	vector<Client *>		_accepts;
+	vector<Channel *>				_channels;
 
 	bool						_resolveOne(Client &responder);
 	// void						_respond();
@@ -69,10 +69,16 @@ private:
 	void						_add_accept();
 	void						_listen(in_addr_t host, in_port_t port);
 public:
+	struct sockaddr_in			_listen_addr;
 	/* ==========================evaluator help funcs======================== */
 	bool						authorize(string const &pass);
-	bool						join_ch(Client &client, string const &channel);
+	e_err_reply					join_ch(Client &client, string &channel, string &key);
+	bool						kick(Client &client, string const &channel, string const &user);
+	bool						invite(Client &client, string const &channel, string const &user);
+	bool						topic(Client &client, string const &channel, string const &topic);
+	bool						mode(Client &client, string const &channel, string const &mode);
 	Client						*getUserByX(string const &x);
+	Channel						*getChannelByX(string &x);
 	/* ==========================evaluator help funcs======================== */
 	
 	void						pause();
