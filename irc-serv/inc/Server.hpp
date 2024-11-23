@@ -58,8 +58,8 @@ private:
 
 	string						pass;
 
-	vector<Client *>		_accepts;
-	vector<Channel *>				_channels;
+	vector<Client *>			_accepts;
+	vector<Channel *>			_channels;
 
 	bool						_resolveOne(Client &responder);
 	// void						_respond();
@@ -77,8 +77,8 @@ public:
 	bool						invite(Client &client, string const &channel, string const &user);
 	bool						topic(Client &client, string const &channel, string const &topic);
 	bool						mode(Client &client, string const &channel, string const &mode);
-	Client						*getUserByX(string const &x);
-	Channel						*getChannelByX(string &x);
+	Client						*getClientByNick(string const &x);
+	Channel						*getChannelByName(string &x);
 	/* ==========================evaluator help funcs======================== */
 	
 	void						pause();

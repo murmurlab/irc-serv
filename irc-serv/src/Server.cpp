@@ -118,6 +118,9 @@ void	Server::_add_accept() {
 
 static void	write_data(int desc, string const &line) {
 	write(desc, line.c_str(), line.length());
+	// cout << (int)line.c_str()[line.length() - 1] << endl;
+	// cout << (int)line.c_str()[line.length() - 2] << endl;
+	// cout << "write_data: " << "[" << line << "]" << endl;
 }
 
 bool	Server::_resolveOne(Client &receiver) {
@@ -130,7 +133,7 @@ bool	Server::_resolveOne(Client &receiver) {
 		case EMIT:
 			break;
 		case SEND:
-			cout << "SEND" << endl;
+			cout << "SEND: ";
 			// if (res_msg.prefix.u)
 			write_data(receiver.desc, Message::_serialize(res_msg.msg));
 			// for (std::vector<class Client *>::size_type i = 0; i < _accepts.size(); i++) {
@@ -139,6 +142,7 @@ bool	Server::_resolveOne(Client &receiver) {
 			// }
 			break;
 		case VOID:
+			cout << "VOID: " << endl;
 			break;
 	}
 	cout << "]" << "promised!" << endl;
@@ -150,10 +154,18 @@ bool	Server::authorize(string const &pass) {
 	return pass == this->pass;
 }
 
-Channel	*Server::getChannelByX(string &channel) {
+Channel	*Server::getChannelByName(string &channel) {
 	for (std::vector<Channel *>::size_type i = 0; i < _channels.size(); i++) {
 		if (_channels[i]->name == channel)
 			return _channels[i];
+	}
+	return NULL;
+}
+
+Client	*Server::getClientByNick(string const &x) {
+	for (std::vector<Client *>::size_type i = 0; i < _accepts.size(); i++) {
+		if (_accepts[i]->nickname == x)
+			return _accepts[i];
 	}
 	return NULL;
 }
@@ -162,7 +174,7 @@ e_err_reply	Server::join_ch(Client &client, string &channel, string &key) {
 	Channel		*ch;
 	
 	
-	ch = getChannelByX(channel);
+	ch = getChannelByName(channel);
 	if (channel[0] != '&')
 		return ERR_NOSUCHCHANNEL;
 	if (ch == NULL) {

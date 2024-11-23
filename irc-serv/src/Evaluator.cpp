@@ -4,15 +4,17 @@
 #include "Message.hpp"
 #include "Server.hpp"
 #include "Lexer.hpp"
+#include "irc.hpp"
+#include <algorithm>
 #include <arpa/inet.h>
 #include <cstddef>
 #include <sstream>
 #include <string>
 #include <unistd.h>
 
-Evaluator::Evaluator(Lexer &lexer_, Client &me_): _lexer(lexer_), _me(me_) {
+using std::find_first_of;
 
-}
+Evaluator::Evaluator(Lexer &lexer_, Client &me_) : _lexer(lexer_), _me(me_) {}
 
 Instruction	&Evaluator::newInstruction() {
 	promises.resize(promises.size() + 1);
@@ -135,6 +137,87 @@ void	Evaluator::_CAP(Message &msg)
 	return ;
 }
 
+void Evaluator::_NICK(Message &msg) {
+	// Instruction	&res = newInstruction();
+	static string	nick_chars(NICK_CHARS);
+
+	if (msg.params.size() == 0) {
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "431";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "No nickname given";
+		return ;
+	}
+	// 432
+	if (msg.params[0].find_first_not_of(nick_chars) != string::npos) {
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "432";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.params.push_back(msg.params[0]);
+		res.msg.trailing = "Erroneous nickname";
+		return ;
+	}
+	// 433
+	if (_me._server.getClientByNick(msg.params[0]) != NULL) {
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "433";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.params.push_back(msg.params[0]);
+		res.msg.trailing = "Nickname is already in use";
+		return ;
+	}
+	if (_me.nickname.empty()) {
+		_me.nickname = msg.params[0];
+		return ;
+	}
+	{
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "NICK";
+		res.msg.params.push_back(msg.params[0]);
+		res.msg.prefix.nick = _me.nickname;
+		res.msg.prefix.user = _me.username;
+		res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+	}
+	_me.nickname = msg.params[0];
+}
+
+void Evaluator::_USER(Message &msg) {
+	// Instruction	&res = newInstruction();
+
+	if (msg.params.size() <= 3) {
+		if (msg.params.size() == 3 && msg.trailing.empty()) {
+			_CMD_needarg(msg);
+			return ;
+		}
+	}
+	// ERR_ALREADYREGISTRED
+	if (!_me.username.empty()) {
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "462";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "Unauthorized command (already registered)";
+		return ;
+	}
+	_me.username = msg.params[0];
+	_me.realname = msg.trailing;
+	{
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		// res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+		// res.msg.prefix.nick = _me.nickname;
+		// res.msg.prefix.user = _me.username;
+		res.msg.command = "001";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "Welcome to the Internet Relay Network " + _me.nickname + "!" + _me.username + "@" + inet_ntoa(_me.addr.sin_addr);
+	}
+
+}
+
 void Evaluator::_JOIN(Message &msg) {
 	stringstream	keys;
 	stringstream	channels;
@@ -160,17 +243,62 @@ void Evaluator::_JOIN(Message &msg) {
 		{
 			Instruction	&res = newInstruction();
 			res.opr = SEND;
-			res.msg.prefix.host = inet_ntoa(_me._server._listen_addr.sin_addr);
+			// res.msg.prefix.host = inet_ntoa(_me._server._listen_addr.sin_addr);
 			res.msg.params.push_back(_me.nickname);
 			res.msg.params.push_back(channel);
 			switch (_me._server.join_ch(_me, channel, key)) {
 				case SUCCESS: // emit or reply ???
-				cout << "channel: " << channel << " key: " << key << endl;
+				// cout << "channel: " << channel << " key: " << key << endl;
 				res.msg.prefix.nick = _me.nickname;
+				// cout << "nick and user: " << _me.nickname << " " << _me.username << endl;
 				res.msg.prefix.user = _me.username;
-				res.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+				res.msg.prefix.host = "127.0.0.1";
 				res.msg.params.erase(res.msg.params.begin());
+				// res.msg.params.erase(res.msg.params.begin());
+				// res.msg.trailing = channel;
 				res.msg.command = "JOIN";
+				// res.opr = VOID;
+				{
+					Instruction	&res2 = newInstruction();
+					res2.opr = SEND;
+					// res2.msg.prefix.nick = _me.nickname;
+					// res2.msg.prefix.user = _me.username;
+					// res2.msg.prefix.host = "127.0.0.1"; //inet_ntoa(_me.addr.sin_addr);
+					res2.msg.params.push_back(_me.nickname);
+					res2.msg.params.push_back(channel);
+					if (_me._server.getChannelByName(channel)->topic.empty()) {
+						res2.msg.command = ": 332";
+						res2.msg.trailing = "No topic is set";
+					} else {
+						res2.msg.command = "332";
+						res2.msg.trailing = _me._server.getChannelByName(channel)->topic;
+					}
+				}
+				{
+					Instruction	&res3 = newInstruction();
+					res3.opr = SEND;
+					res3.msg.prefix.nick = _me.nickname;
+					res3.msg.prefix.user = _me.username;
+					res3.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+					res3.msg.command = "353";
+					res3.msg.params.push_back("=" + channel);
+					for (std::vector<Client *>::size_type i = 0; i < _me._server.getChannelByName(channel)->clients.size(); i++) {
+						res3.msg.trailing += _me._server.getChannelByName(channel)->clients[i]->nickname + " ";
+					}
+					// res3.msg.trailing = "testuser1 testuser2";
+				}
+				{
+					Instruction	&res4 = newInstruction();
+					res4.opr = SEND;
+					res4.msg.prefix.nick = _me.nickname;
+					res4.msg.prefix.user = _me.username;
+					res4.msg.prefix.host = inet_ntoa(_me.addr.sin_addr);
+					res4.msg.command = "366";
+					res4.msg.params.push_back(channel);
+					res4.msg.trailing = "End of NAMES list.";
+				}
+				// res.msg.command = "JOIN";
+				// res.opr = VOID;
 				break ;
 				case ERR_NOSUCHCHANNEL:
 				res.msg.command = "403";
@@ -248,30 +376,34 @@ void	Evaluator::_PASS(Message &msg) {
 		_CMD_needarg(msg);
 		return ;
 	}
-	// cout << "PASSssss" << endl;
-	Instruction	&res = newInstruction();
-
-	res.opr = SEND;
 	if (_me.authorized) {
+		Instruction	&res = newInstruction();
+
+		res.opr = SEND;
 		res.msg.command = "462";
 		res.msg.params.push_back(_me.nickname);
 		res.msg.trailing = "Unauthorized command (already registered)";
 		return ;
 	}
 	_me.authorized = _me._server.authorize(msg.trailing);
-	if (!_me.authorized) {
-		res.msg.command = "464";
-		res.msg.params.push_back(_me.nickname);
-		res.msg.trailing = "Password incorrect";
+	if (_me.authorized)
 		return ;
-	}
-	_me.authorized = 1;
-	res.msg.command = "001";
+	Instruction	&res = newInstruction();
+
+	res.opr = SEND;
+	res.msg.command = "464";
 	res.msg.params.push_back(_me.nickname);
-	res.msg.trailing = res.msg.trailing +
-		"Welcome to the Internet Relay Network " +
-		_me.nickname + "!" + _me.username + "@" +
-		inet_ntoa(_me.addr.sin_addr);
+	res.msg.trailing = "Password incorrect";
+	// Instruction	&res = newInstruction();
+
+	// res.opr = SEND;
+	// res.msg.command = "001";
+	// res.msg.params.push_back(_me.nickname);
+	// res.msg.trailing = res.msg.trailing +
+	// 	"Welcome to the Internet Relay Network " +
+	// 	_me.nickname + "!" + _me.username + "@" +
+	// 	inet_ntoa(_me.addr.sin_addr);
+	// res.opr = VOID;
 }
 
 void Evaluator::_NOTICE(Message &msg)
@@ -329,8 +461,8 @@ int Evaluator::_evalOne(std::list<Message> &msgs)
 	msg = &(msgs.front());
 	
 	void (Evaluator::*funcs[])(Message &msg) = {&Evaluator::_CAP, &Evaluator::_PASS,\
-	&Evaluator::_QUIT, &Evaluator::_PING, &Evaluator::_JOIN, &Evaluator::_LIST, &Evaluator::_NOTICE};
-	std::string cmds[] = {"CAP", "PASS", "QUIT", "PING", "JOIN", "LIST", "NOTICE"};
+	&Evaluator::_QUIT, &Evaluator::_PING, &Evaluator::_JOIN, &Evaluator::_LIST, &Evaluator::_NOTICE, &Evaluator::_NICK, &Evaluator::_USER};
+	std::string cmds[] = {"CAP", "PASS", "QUIT", "PING", "JOIN", "LIST", "NOTICE", "NICK", "USER"};
 
 	switch (_me.authorized) {
 		case 0:

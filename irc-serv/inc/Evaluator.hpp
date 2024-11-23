@@ -33,6 +33,8 @@ class Evaluator {
 	void	_CAP_REQ(Message &msg);
 	void	_CAP_unk(Message &msg);
 	void	_CAP(Message &msg);
+	void	_NICK(Message &msg);
+	void	_USER(Message &msg);
 	void	_JOIN(Message &msg);
 	void	_PASS(Message &msg);
 	void	_NOTICE(Message &msg);

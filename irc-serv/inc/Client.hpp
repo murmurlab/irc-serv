@@ -28,7 +28,8 @@ public:
 	int					authorized;
 	string				username;
 	string				nickname;
-	
+	string				realname;
+
 	void				on_data();
 	int					desc;
 	struct sockaddr_in	addr;
