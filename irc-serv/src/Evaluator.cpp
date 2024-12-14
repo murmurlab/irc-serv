@@ -730,22 +730,23 @@ void Evaluator::_KICK(Message &msg)
 
 void Evaluator::_PRIVMSG(Message &msg)
 {
-	Channel		*ch;
-	ChMember	*me;
+	(void)msg;
+	// Channel		*ch;
+	// ChMember	*me;
 
-	if (msg.params.size() == 0) {
-		_CMD_needarg(msg);
-		return ;
-	}
-	// 412
-	if (msg.params.size() == 1) {
-		Instruction	&res = newInstruction();
-		res.opr = SEND;
-		res.msg.command = "412";
-		res.msg.params.push_back(_me.nickname);
-		res.msg.trailing = "No text to send";
-		return ;
-	}
+	// if (msg.params.size() == 0) {
+	// 	_CMD_needarg(msg);
+	// 	return ;
+	// }
+	// // 412
+	// if (msg.params.size() == 1) {
+	// 	Instruction	&res = newInstruction();
+	// 	res.opr = SEND;
+	// 	res.msg.command = "412";
+	// 	res.msg.params.push_back(_me.nickname);
+	// 	res.msg.trailing = "No text to send";
+	// 	return ;
+	// }
 	
 }
 
