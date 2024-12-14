@@ -22,11 +22,11 @@ string Message::_serialize(Message &res) {
 	}
 	if (!res.command.empty())
 		ret += res.command;
-	for (int x = 0; x < res.params.size(); x++)
+	for (std::vector<std::string>::size_type x = 0; x < res.params.size(); x++)
 		ret += " " + res.params[x];
 	if (!res.trailing.empty())
 		ret += " :" + res.trailing;
-	std::cout << "<" << "\"" << ret << "\"" << endl << endl;
+	// std::cout << "<" << "\"" << ret << "\"" << endl << endl;
 	ret += "\r\n";
 	return ret;
 }

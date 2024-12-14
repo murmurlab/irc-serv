@@ -121,6 +121,8 @@
 // #include <cstdlib>
 
 int main(int argc, char const *argv[]) try {
+	(void)argc;
+	(void)argv;
 	// if (argc != 3)
 	// 	throw runtime_error("least 2 arg");
 	// create_socket(inet_addr(argv[1]), htons(std::atoi(argv[2])));

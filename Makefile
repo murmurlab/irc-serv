@@ -44,7 +44,7 @@ debug = 1
 ifeq '$(debug)' '1'
 CXXFLAGS += -g
 endif
-asan = 0
+asan = 1
 ifeq '$(asan)' '1'
 RUNFLAGS += ASAN_OPTIONS='detect_leaks=1'
 LXXFLAGS += -lasan #-fsanitize=address

@@ -4,12 +4,13 @@
 # include <string>
 # include <netinet/in.h>
 
-# include "Channel.hpp"
+// # include "Channel.hpp"
 # include "Lexer.hpp"
 # include "Evaluator.hpp"
 
 using std::string;
 
+class	Channel;
 class	Lexer;
 class	Server;
 
@@ -29,7 +30,6 @@ public:
 	string				username;
 	string				nickname;
 	string				realname;
-
 	void				on_data();
 	int					desc;
 	struct sockaddr_in	addr;
@@ -37,6 +37,5 @@ public:
 						// Client(Client const &copy);
 						Client(int desc, struct sockaddr_in addr, Server &server);
 };
-
 
 #endif // CLIENT_HPP

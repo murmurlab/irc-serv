@@ -16,11 +16,13 @@ typedef enum e_operation
 	VOID
 }			e_operation;
 
+class Client;
+
 class Instruction {
 public:
 	e_operation	opr;
 
-	string		receiver;
+	vector<Client *>	clients;
 	/* 
 		additional data fields
 	 */

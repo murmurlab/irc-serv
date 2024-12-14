@@ -1,3 +1,4 @@
+#include "ChMember.hpp"
 #include "Channel.hpp"
 #include "Evaluator.hpp"
 #include <string>
@@ -47,11 +48,11 @@ typedef short	t_port;
 // 	socklen_t			len;
 // }	t_passive;
 
-typedef struct Server {
+class Server {
 private:
 	struct addrinfo				_addrinfo;
 
-	vector<struct pollfd>	_vec_pollfd;
+	vector<struct pollfd>		_vec_pollfd;
 	
 	int							_listen_desc;
 	socklen_t					_listen_len;
@@ -72,18 +73,19 @@ public:
 	struct sockaddr_in			_listen_addr;
 	/* ==========================evaluator help funcs======================== */
 	bool						authorize(string const &pass);
-	e_err_reply					join_ch(Client &client, string &channel, string &key);
+	Channel						&join_ch(Client &client, string &channel, string &key);
 	bool						kick(Client &client, string const &channel, string const &user);
 	bool						invite(Client &client, string const &channel, string const &user);
 	bool						topic(Client &client, string const &channel, string const &topic);
 	bool						mode(Client &client, string const &channel, string const &mode);
 	Client						*getClientByNick(string const &x);
 	Channel						*getChannelByName(string &x);
+	ChMember					*getMemberByName(Channel &ch, string &nick);
+	void						leave_ch(Client &client, Channel &ch);
 	/* ==========================evaluator help funcs======================== */
-	
 	void						pause();
 								Server(string host, t_port port, string pass);
 								~Server();
-} Server;
+};
 
 #endif // SERVER_HPP

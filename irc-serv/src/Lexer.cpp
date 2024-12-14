@@ -91,7 +91,7 @@ void Lexer::_tokenize()
 		msgs.resize(msgs.size() + 1);
 		_msg = &msgs.back();
 
-		cout << _gls._desc << "> " << *_gls.seg << endl;
+		cout << "<" << _gls._desc << " " << *_gls.seg << endl;
 
 		_ss.str(*_gls.seg);
 		while (!_ss.eof()) {
@@ -118,7 +118,7 @@ void Lexer::_tokenize()
 
 		
 		// _msg->print_msg(*_msg);
-		print_msg(*_msg);
+		// print_msg(*_msg);
 		{
 			// return ;// one message
 			// return ;// one message
@@ -144,7 +144,7 @@ void Lexer::_tokenize()
 	// }
 }
 
-Lexer::Lexer(int desc): _gls(desc), _sel_lexer(LEX_PREFIX) {
+Lexer::Lexer(int desc): _sel_lexer(LEX_PREFIX), _gls(desc) {
 
 }
 

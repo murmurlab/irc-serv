@@ -8,8 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-GetLineSegment::GetLineSegment(int desc_): _desc(desc_),
-	_d_sub("\r\n") {
+GetLineSegment::GetLineSegment(int desc_): _d_sub("\r\n"), _desc(desc_) {
 	// _ab[0] = _buff;
 	// _ab[1] = 0;
 }
@@ -22,7 +21,7 @@ string *GetLineSegment::get_line_segment() {
 	while (1) {
 		std::memset(buff, 0, REQ_LEN + 1);
 		_res_len = read(_desc, buff, REQ_LEN);
-		if ((_res_len == -1) && (errno == EWOULDBLOCK))
+		if ((_res_len == (size_t)-1) && (errno == EWOULDBLOCK))
 			throw ewouldblock("read(): -1");
 		if (_res_len == 0) {
 			std::cerr << "read(): 0" << endl;

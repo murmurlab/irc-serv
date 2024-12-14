@@ -1,6 +1,8 @@
 #include "Server.hpp"
+#include "ChMember.hpp"
 #include "Channel.hpp"
 #include "Client.hpp"
+#include "Evaluator.hpp"
 #include "Instruction.hpp"
 #include "Lexer.hpp"
 #include "Message.hpp"
@@ -18,12 +20,13 @@
 // int					sd;
 // int					csd;
 
-static void	server_sigint(int sig) {
-	cout << "server_sigint()" << endl;
-	// close(sd);
-	// close(csd);
-	std::exit(0);
-}
+// static void	server_sigint(int sig) {
+// 	(void)sig;
+// 	cout << "server_sigint()" << endl;
+// 	// close(sd);
+// 	// close(csd);
+// 	std::exit(0);
+// }
 
 static void	*stdin_loop(void *csd) {
 	string line;
@@ -46,7 +49,7 @@ static void	test_input(int csd) {
 }
 
 void	Server::_listen(in_addr_t host, in_port_t port) {
-	const static size_t P_IP =	getprotobyname("ip")->p_proto; // use tcp
+	// const static size_t P_IP =	getprotobyname("ip")->p_proto; // use tcp
 	struct pollfd		new_pollfd;
 	int					*option_value;
 	
@@ -118,9 +121,9 @@ void	Server::_add_accept() {
 
 static void	write_data(int desc, string const &line) {
 	write(desc, line.c_str(), line.length());
-	// cout << (int)line.c_str()[line.length() - 1] << endl;
-	// cout << (int)line.c_str()[line.length() - 2] << endl;
-	// cout << "write_data: " << "[" << line << "]" << endl;
+	// yellow color
+	cout << "\033[33m" << ">" << desc << " " << string(line.begin(), line.end() - 2) << "\033[0m" << endl;
+	// cout << ">" << desc << " " << string(line.begin(), line.end() - 2) << endl;
 }
 
 bool	Server::_resolveOne(Client &receiver) {
@@ -128,12 +131,15 @@ bool	Server::_resolveOne(Client &receiver) {
 	if (receiver._evaluator.promises.empty())
 		return false;
 	Instruction		&res_msg = receiver._evaluator.promises.front();
-	cout << "promise: " << res_msg.opr << "comm: " << res_msg.msg.command << "[" << endl;
+	// cout << "promise: " << res_msg.opr << "comm: " << res_msg.msg.command << "[" << endl;
 	switch (res_msg.opr) {
 		case EMIT:
+			for (std::vector<class Client *>::size_type i = 0; i < res_msg.clients.size(); i++) {
+				write_data(res_msg.clients[i]->desc, Message::_serialize(res_msg.msg));
+			}
 			break;
 		case SEND:
-			cout << "SEND: ";
+			// cout << "SEND: ";
 			// if (res_msg.prefix.u)
 			write_data(receiver.desc, Message::_serialize(res_msg.msg));
 			// for (std::vector<class Client *>::size_type i = 0; i < _accepts.size(); i++) {
@@ -142,16 +148,48 @@ bool	Server::_resolveOne(Client &receiver) {
 			// }
 			break;
 		case VOID:
-			cout << "VOID: " << endl;
+			// cout << "VOID: " << endl;
 			break;
 	}
-	cout << "]" << "promised!" << endl;
+	// cout << "]" << "promised!" << endl;
 	receiver._evaluator.promises.pop_front();
 	return true;
 }
 
 bool	Server::authorize(string const &pass) {
 	return pass == this->pass;
+}
+
+void	Server::leave_ch(Client &client, Channel &ch) {
+	for (std::vector<Channel *>::size_type i = 0; i < client.chs.size(); i++) {
+		if (client.chs[i] == &ch) {
+			client.chs.erase(client.chs.begin() + i);
+			break;
+		}
+	}
+	for (std::vector<ChMember>::size_type i = 0; i < ch.members.size(); i++) {
+		if (ch.members[i].client == &client) {
+			ch.members.erase(ch.members.begin() + i);
+			break;
+		}
+	}
+	if (ch.members.empty()) {
+		for (std::vector<Channel *>::size_type i = 0; i < _channels.size(); i++) {
+			if (_channels[i] == &ch) {
+				_channels.erase(_channels.begin() + i);
+				delete &ch;
+				break;
+			}
+		}
+	}
+}
+
+ChMember	*Server::getMemberByName(Channel &ch, string &nick) {
+	for (std::vector<ChMember>::size_type i = 0; i < ch.members.size(); i++) {
+		if (ch.members[i].client->nickname == nick)
+			return &ch.members[i];
+	}
+	return NULL;
 }
 
 Channel	*Server::getChannelByName(string &channel) {
@@ -170,27 +208,33 @@ Client	*Server::getClientByNick(string const &x) {
 	return NULL;
 }
 
-e_err_reply	Server::join_ch(Client &client, string &channel, string &key) {
+Channel	&Server::join_ch(Client &client, string &channel, string &key) {
 	Channel		*ch;
-	
+	ChMember	memb(&client);
 	
 	ch = getChannelByName(channel);
 	if (channel[0] != '&')
-		return ERR_NOSUCHCHANNEL;
+		throw ERR_NOSUCHCHANNEL;
 	if (ch == NULL) {
-		ch = new Channel(client, channel);
+		memb.op = true;
+		ch = new Channel(memb, channel);
 		_channels.push_back(ch);
 		client.chs.push_back(ch);
+		return *ch;
 	}
-	if (ch->limitted && ch->clients.size() >= ch->limit)
-		return ERR_CHANNELISFULL;
-	if (ch->invite_only)
-		return ERR_INVITEONLYCHAN;
+	for (std::vector<ChMember>::size_type i = 0; i < ch->members.size(); i++) {
+		if (ch->members[i].client == &client)
+			throw SUCCESS;
+	}
+	if (ch->flags.l && ch->members.size() >= ch->limit)
+		throw ERR_CHANNELISFULL;
+	if (ch->flags.i)
+		throw ERR_INVITEONLYCHAN;
 	if (!key.empty() && ch->pass != key)
-		return ERR_BADCHANNELKEY;
-	ch->clients.push_back(&client);
+		throw ERR_BADCHANNELKEY;
+	ch->members.push_back(memb);
 	client.chs.push_back(ch);
-	return SUCCESS;
+	return *ch;
 }
 
 Server::~Server() {
@@ -198,8 +242,7 @@ Server::~Server() {
 		delete _accepts.back();
 }
 
-Server::Server(string host, t_port port, string pass): _listen_len(sizeof(_listen_addr)), 
-	_listen_desc(-1), pass(pass) {
+Server::Server(string host, t_port port, string pass): _listen_desc(-1), _listen_len(sizeof(_listen_addr)), pass(pass) {
 	nfds_t	poll_ed;
 
 	_listen(inet_addr(host.c_str()), htons(port));

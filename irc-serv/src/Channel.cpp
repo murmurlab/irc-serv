@@ -1,10 +1,10 @@
 #include "Channel.hpp"
 
-Channel::Channel(Client &client, string &name): name(name) {
-	clients.push_back(&client);
+Channel::Channel(ChMember &op, string &name): name(name) {
+	members.push_back(op);
 	// ops.push_back(&client);
-	invite_only = false;
-	topic_protect = false;
-	limitted = false;
+	this->flags.i = false;
+	this->flags.t = false;
+	this->flags.l = false;
 	limit = 0;
 }
