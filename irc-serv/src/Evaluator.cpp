@@ -22,6 +22,20 @@ Instruction	&Evaluator::newInstruction() {
 	return promises.back();
 }
 
+bool	Evaluator::_check_register(Message &msg) {
+	if (_me.nickname.empty() || _me.username.empty()) {
+		if (msg.command == "NICK" || msg.command == "USER" || msg.command == "PASS")
+			return true;
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "451";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "You have not registered";
+		return false;
+	}
+	return true;
+}
+
 void	Evaluator::_CMD_needarg(Message &msg) {
 	(void)msg;
 	Instruction	&res = newInstruction();
@@ -152,8 +166,16 @@ void Evaluator::_NICK(Message &msg) {
 		res.msg.trailing = "No nickname given";
 		return ;
 	}
+	if (msg.params[0].empty()) {
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "431";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "No nickname given";
+		return ;
+	}
 	// 432
-	if (msg.params[0].find_first_not_of(nick_chars) != string::npos) {
+	if ((msg.params[0].find_first_not_of(nick_chars) != string::npos)) {
 		Instruction	&res = newInstruction();
 		res.opr = SEND;
 		res.msg.command = "432";
@@ -206,8 +228,20 @@ void Evaluator::_USER(Message &msg) {
 		res.msg.trailing = "Unauthorized command (already registered)";
 		return ;
 	}
+	// ERR_NEEDMOREPARAMS
+	if (msg.params[0].empty()) {
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "461";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.params.push_back("USER");
+		res.msg.trailing = "Not enough parameters";
+		return ;
+	}
 	_me.username = msg.params[0];
 	_me.realname = msg.trailing;
+
+	if (!_me.nickname.empty() && !_me.username.empty())
 	{
 		Instruction	&res = newInstruction();
 		res.opr = SEND;
@@ -238,7 +272,7 @@ void Evaluator::_JOIN(Message &msg) {
 		keys.str(msg.params[1]);
 	}
 	channels.str(msg.params[0]);
-	while (getline(channels, channel, ',')) {
+	while (getline(channels, channel, ',')) { // not work ,
 		// cout << "channel: " << channel << " key: " << key << endl;
 		switch (has_key) {
 			case 1: if (getline(keys, key, ','));else has_key = 0;
@@ -259,7 +293,7 @@ void Evaluator::_JOIN(Message &msg) {
 			break ;
 			case ERR_BADCHANNELKEY:
 			res->msg.command = "475";
-			res->msg.trailing = "Cannot join channel (+k)";
+			res->msg.trailing = "Cannot join channel (+k)"; // JOIN &aa, &bb
 			break ;
 			case ERR_CHANNELISFULL:
 			res->msg.command = "471";
@@ -381,6 +415,7 @@ void	Evaluator::_PASS(Message &msg) {
 		res.msg.trailing = "Unauthorized command (already registered)";
 		return ;
 	}
+	// cout << "test pass: [" << msg.trailing << "]" << endl;
 	_me.authorized = _me._server.authorize(msg.trailing);
 	if (_me.authorized)
 		return ;
@@ -390,6 +425,7 @@ void	Evaluator::_PASS(Message &msg) {
 	res.msg.command = "464";
 	res.msg.params.push_back(_me.nickname);
 	res.msg.trailing = "Password incorrect";
+
 	// Instruction	&res = newInstruction();
 
 	// res.opr = SEND;
@@ -613,7 +649,7 @@ void Evaluator::_TOPIC(Message &msg)
 		res->msg.trailing = "No such channel";
 		return ;
 	}
-	if (msg.params.size() == 1) {
+	if (msg.trailing.empty()) {
 		if (ch->topic.empty()) {
 			res->msg.command = "331";
 			res->msg.params.push_back(_me.nickname);
@@ -642,6 +678,7 @@ void Evaluator::_TOPIC(Message &msg)
 		res->msg.trailing = "You're not channel operator";
 		return ;
 	}
+	ch->topic = msg.trailing;
 	res->opr = EMIT;
 	res->msg.command = "TOPIC";
 	res->msg.prefix.nick = _me.nickname;
@@ -703,8 +740,7 @@ void Evaluator::_KICK(Message &msg)
 		res.msg.trailing = "You're not channel operator";
 		return ;
 	}
-
-	for (string nick; ss >> nick;) {
+	for (string nick; getline(ss, nick, ',');) {
 		if ((client = _me._server.getClientByNick(nick)) == NULL) {
 			Instruction	&res = newInstruction();
 			res.opr = SEND;
@@ -724,30 +760,109 @@ void Evaluator::_KICK(Message &msg)
 			res.msg.trailing = msg.trailing;
 			for (std::vector<ChMember>::size_type i = 0; i < ch->members.size(); i++)
 				res.clients.push_back(ch->members[i].client);
+			_me._server.leave_ch(*client, *ch);
 		}
 	}
+	// for (string nick; ss >> nick;) {
+	// 	if ((client = _me._server.getClientByNick(nick)) == NULL) {
+	// 		Instruction	&res = newInstruction();
+	// 		res.opr = SEND;
+	// 		res.msg.command = "401";
+	// 		res.msg.params.push_back(_me.nickname);
+	// 		res.msg.params.push_back(nick);
+	// 		res.msg.trailing = "No such nick/channel";
+	// 		continue ;
+	// 	}
+	// 	{
+	// 		Instruction	&res = newInstruction();
+	// 		res.opr = EMIT;
+	// 		res.msg.command = "KICK";
+	// 		res.msg.prefix.nick = _me.nickname;
+	// 		res.msg.params.push_back(msg.params[0]);
+	// 		res.msg.params.push_back(nick);
+	// 		res.msg.trailing = msg.trailing;
+	// 		for (std::vector<ChMember>::size_type i = 0; i < ch->members.size(); i++)
+	// 			res.clients.push_back(ch->members[i].client);
+	// 		_me._server.leave_ch(*client, *ch);
+	// 	}
+	// }
 }
 
 void Evaluator::_PRIVMSG(Message &msg)
 {
-	(void)msg;
-	// Channel		*ch;
-	// ChMember	*me;
+	string	target;
+	Channel	*ch;
+	Client	*receiver;
 
-	// if (msg.params.size() == 0) {
-	// 	_CMD_needarg(msg);
-	// 	return ;
-	// }
-	// // 412
-	// if (msg.params.size() == 1) {
-	// 	Instruction	&res = newInstruction();
-	// 	res.opr = SEND;
-	// 	res.msg.command = "412";
-	// 	res.msg.params.push_back(_me.nickname);
-	// 	res.msg.trailing = "No text to send";
-	// 	return ;
-	// }
-	
+	if (msg.params.size() == 0) {
+		_CMD_needarg(msg);
+		return ;
+	}
+	if (msg.trailing.empty()) {
+		Instruction	&res = newInstruction();
+		res.opr = SEND;
+		res.msg.command = "412";
+		res.msg.params.push_back(_me.nickname);
+		res.msg.trailing = "No text to send";
+		return ;
+	}
+	for (stringstream ss(msg.params[0]); getline(ss, target, ',');) {
+		cout << "target: " << target << endl;
+		if (target[0] == '&') {
+			// PRIVMSG &irccat-kanel :massage44
+			ch = _me._server.getChannelByName(target);
+			if (ch == NULL) {
+				Instruction	&res = newInstruction();
+				res.opr = SEND;
+				res.msg.command = "401";
+				res.msg.params.push_back(_me.nickname);
+				res.msg.params.push_back(target);
+				res.msg.trailing = "No such nick/channel";
+				continue ;
+			}
+			if (_me._server.getMemberByName(*ch, _me.nickname) == NULL) {
+				Instruction	&res = newInstruction();
+				res.opr = SEND;
+				res.msg.command = "404"; // PRIVMSG &aa,&bb :data
+				res.msg.params.push_back(_me.nickname);
+				res.msg.params.push_back(target);
+				res.msg.trailing = "Cannot send to channel";
+				continue ;
+			}
+			{
+				Instruction	&res = newInstruction();
+				res.opr = EMIT;
+				res.msg.command = "PRIVMSG";
+				res.msg.prefix.nick = _me.nickname;
+				res.msg.params.push_back(target);
+				res.msg.trailing = msg.trailing;
+				for (std::vector<ChMember>::size_type i = 0; i < ch->members.size(); i++) {
+					if (ch->members[i].client->nickname != _me.nickname)
+						res.clients.push_back(ch->members[i].client);
+				}
+			}
+		} else {
+			receiver = _me._server.getClientByNick(target);
+			if (receiver == NULL) {
+				Instruction	&res = newInstruction();
+				res.opr = SEND;
+				res.msg.command = "401";
+				res.msg.params.push_back(_me.nickname);
+				res.msg.params.push_back(target);
+				res.msg.trailing = "No such nick/channel";
+				continue ;
+			}
+			{
+				Instruction	&res = newInstruction();
+				res.opr = EMIT;
+				res.msg.command = "PRIVMSG";
+				res.msg.prefix.nick = _me.nickname;
+				res.msg.params.push_back(receiver->nickname + "!" + receiver->username + "@" + inet_ntoa(receiver->addr.sin_addr));
+				res.msg.trailing = msg.trailing;
+				res.clients.push_back(receiver);
+			}
+		}
+	}
 }
 
 void Evaluator::_PART(Message &msg)
@@ -818,12 +933,18 @@ int Evaluator::_evalOne(std::list<Message> &msgs)
 	std::string cmds[] = {
 		"CAP", "PASS", "QUIT", "PING", "JOIN", "NICK", "USER",
 		"MODE", "TOPIC", "INVITE", "KICK", "PRIVMSG", "PART"};
-
+	cout << "evalOne: " << "[" << msg->command << "]"<< endl;
 	switch (_me.authorized) {
 		case 0:
 		if (msg->command != "PASS") {
 			if (msg->command != "CAP" && msg->command != "PING") {
-				// not authorized
+
+				Instruction	&res = newInstruction();
+				res.opr = SEND;
+				res.msg.command = "451";
+				res.msg.params.push_back(_me.nickname);
+				res.msg.trailing = "You have not registered!";
+
 				cout << "not authorized: " << msg->command << endl;
 				msgs.pop_front();
 				return 1;
@@ -839,7 +960,8 @@ int Evaluator::_evalOne(std::list<Message> &msgs)
         	break;
     	}
     	if (msg->command == cmds[x]) {
-        	(this->*funcs[x])(*msg);
+			if (_check_register(*msg))
+				(this->*funcs[x])(*msg);
         	break;
     	}
 	}

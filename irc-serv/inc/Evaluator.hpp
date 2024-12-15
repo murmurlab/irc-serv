@@ -28,6 +28,8 @@ class Evaluator {
 	Client					&_me;
 	Lexer					&_lexer;
 	
+	bool	_check_register(Message &msg);
+
 	void	_CAP_END(Message &msg);
 	void	_CAP_LS(Message &msg);
 	void	_CAP_REQ(Message &msg);

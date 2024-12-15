@@ -47,7 +47,7 @@ endif
 asan = 1
 ifeq '$(asan)' '1'
 RUNFLAGS += ASAN_OPTIONS='detect_leaks=1'
-LXXFLAGS += -lasan #-fsanitize=address
+LXXFLAGS += -fsanitize=address #-lasan
 # LXXFLAGS += -fsanitize=thread
 endif
 test = 0

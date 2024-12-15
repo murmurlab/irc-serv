@@ -161,6 +161,7 @@ bool	Server::authorize(string const &pass) {
 }
 
 void	Server::leave_ch(Client &client, Channel &ch) {
+	// list of channels members
 	for (std::vector<Channel *>::size_type i = 0; i < client.chs.size(); i++) {
 		if (client.chs[i] == &ch) {
 			client.chs.erase(client.chs.begin() + i);
@@ -173,10 +174,13 @@ void	Server::leave_ch(Client &client, Channel &ch) {
 			break;
 		}
 	}
+	// ch.members.size()
+	// cout << "member size mentioned channel: " << ch.members.size() << " " << ch.name << endl;
 	if (ch.members.empty()) {
 		for (std::vector<Channel *>::size_type i = 0; i < _channels.size(); i++) {
 			if (_channels[i] == &ch) {
 				_channels.erase(_channels.begin() + i);
+				cout << "channel " << ch.name << " deleted" << endl;
 				delete &ch;
 				break;
 			}
@@ -201,6 +205,8 @@ Channel	*Server::getChannelByName(string &channel) {
 }
 
 Client	*Server::getClientByNick(string const &x) {
+	if (x.empty())
+		return NULL;
 	for (std::vector<Client *>::size_type i = 0; i < _accepts.size(); i++) {
 		if (_accepts[i]->nickname == x)
 			return _accepts[i];
@@ -230,8 +236,10 @@ Channel	&Server::join_ch(Client &client, string &channel, string &key) {
 		throw ERR_CHANNELISFULL;
 	if (ch->flags.i)
 		throw ERR_INVITEONLYCHAN;
-	if (!key.empty() && ch->pass != key)
+	if ((ch->pass != key) && !ch->pass.empty()) {
+		// if (!key.empty())
 		throw ERR_BADCHANNELKEY;
+	}
 	ch->members.push_back(memb);
 	client.chs.push_back(ch);
 	return *ch;
@@ -247,8 +255,8 @@ Server::Server(string host, t_port port, string pass): _listen_desc(-1), _listen
 
 	_listen(inet_addr(host.c_str()), htons(port));
 	while (true) {
-		// cout << "while turue" << endl;
 		poll_ed = poll(_vec_pollfd.data(), (nfds_t)_vec_pollfd.size(), TIMEOUT_POLLING);
+		cout << "poll" << endl;
 		if (poll_ed < 0)
 			throw runtime_error("poll(): " + string(strerror(errno)));
 		// cout << "poll_ed: " << poll_ed << endl;
@@ -260,23 +268,37 @@ Server::Server(string host, t_port port, string pass): _listen_desc(-1), _listen
 			_add_accept();
 		}
 		for (nfds_t i = 1; i < (nfds_t)_vec_pollfd.size(); i++) {
+			cout << "checking: " << i << endl;
 			// cout << i << ": " << (void *)(_vec_pollfd[i].revents) << endl;
 			if (_vec_pollfd[i].revents & POLLHUP) {
-				cout << " disconnected " << i - 1 << endl;
+				cout << " POLLHUP index: " << i << endl;
 				_vec_pollfd.erase(_vec_pollfd.begin() + i);
-				_accepts.erase(_accepts.begin() + i);
+				delete _accepts[i - 1];
+				_accepts.erase(_accepts.begin() + (i - 1));
+				// print pollfds
 			}
 			else if (_vec_pollfd[i].revents & POLLRDNORM) {
 				// cout << "POLLRDNORM in:" << i - 1 << endl;
 				// _vec_pollfd[i].revents = 0;
 				// Parser	p1(_vec_pollfd[i].fd);
-				_accepts[i - 1]->on_data();
-				// std::cout << "/* message */" << _accepts[i - 1]->desc << std::endl;
+				cout << "POLLRDNORM index: " << i << " on_data: " << _accepts[i - 1]->desc << endl;
+				try {
+					_accepts[i - 1]->on_data();
+				} catch (runtime_error &e) {
+					cout << e.what() << "======" << endl;
+					_vec_pollfd.erase(_vec_pollfd.begin() + i);
+					delete _accepts[i - 1];
+					_accepts.erase(_accepts.begin() + (i - 1));
+					i--;
+					continue ;
+				}
 				while(_resolveOne(*_accepts[i - 1]));
 				// _respondAll(_accepts[i - 1]);
 			}
+			for (std::vector<struct pollfd>::size_type i = 0; i < _vec_pollfd.size(); i++)
+				cout << i << ": " << _vec_pollfd[i].fd << endl;
 		}
-	}	
+	}
 	// if (errno)
 	// 	perror("accept()");
 	// errno = 0;

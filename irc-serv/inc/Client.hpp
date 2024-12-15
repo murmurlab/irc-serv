@@ -36,6 +36,7 @@ public:
 	socklen_t			len;
 						// Client(Client const &copy);
 						Client(int desc, struct sockaddr_in addr, Server &server);
+						~Client();
 };
 
 #endif // CLIENT_HPP

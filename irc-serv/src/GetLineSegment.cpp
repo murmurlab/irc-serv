@@ -24,7 +24,7 @@ string *GetLineSegment::get_line_segment() {
 		if ((_res_len == (size_t)-1) && (errno == EWOULDBLOCK))
 			throw ewouldblock("read(): -1");
 		if (_res_len == 0) {
-			std::cerr << "read(): 0" << endl;
+			std::cerr << "read(): 0, fd: " << _desc << endl;
 			throw std::runtime_error("read(): 0"); // client hang up
 		}
 		_left = (_left + buff);
