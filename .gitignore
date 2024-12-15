@@ -1,2 +1,3 @@
 **.o
-*ircserv.dSYM/
+**ircserv.dSYM/
+**.clangd

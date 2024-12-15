@@ -7,8 +7,15 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <unistd.h>
+
+GetLineSegment::~GetLineSegment() {
+	// delete seg;
+	close(_desc);
+}
 
 GetLineSegment::GetLineSegment(int desc_): _d_sub("\r\n"), _desc(desc_) {
+	seg = NULL;
 	// _ab[0] = _buff;
 	// _ab[1] = 0;
 }

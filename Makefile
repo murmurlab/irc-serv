@@ -30,7 +30,7 @@ else ifeq '$(os)' 'Linux'
 NPROCS  = $(shell nproc)
 endif
 # MAKEFLAGS += -j$(NPROCS)
-gnu = 1
+gnu = 0
 ifeq '$(gnu)' '1'
 CXXFLAGS += $(stdcxx_cxxflags)
 LXXFLAGS += $(stdcxx_lxxflags)
@@ -44,7 +44,7 @@ debug = 1
 ifeq '$(debug)' '1'
 CXXFLAGS += -g
 endif
-asan = 1
+asan = 0
 ifeq '$(asan)' '1'
 RUNFLAGS += ASAN_OPTIONS='detect_leaks=1'
 LXXFLAGS += -fsanitize=address #-lasan

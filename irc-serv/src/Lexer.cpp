@@ -114,22 +114,7 @@ void Lexer::_tokenize()
 		}
 		_sel_lexer = LEX_PREFIX;;
 		_ss.clear();
-
-
-		
-		// _msg->print_msg(*_msg);
-		// print_msg(*_msg);
-		{
-			// return ;// one message
-			// return ;// one message
-			// return ;// one message
-			// return ;// one message
-
-		}
-		// delete msg;
-		// if (rec == S_Q_CAP_LS)
-		// 	write(*(int *)csd, S_A_CAP_LS, sizeof(S_A_CAP_LS));
-		// getchar();
+		delete _gls.seg;
 	}
 	
 	// size_t				size;

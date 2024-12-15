@@ -35,6 +35,7 @@ public:
 	int							_desc;
 	string						*get_line_segment();
 								GetLineSegment(int desc_);
+								~GetLineSegment();
 };
 
 #endif // GET_LINE_SEGMENT_HPP

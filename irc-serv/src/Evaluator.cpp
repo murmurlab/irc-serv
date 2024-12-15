@@ -867,53 +867,54 @@ void Evaluator::_PRIVMSG(Message &msg)
 
 void Evaluator::_PART(Message &msg)
 {
-	Channel			*ch;
-	ChMember		*me;
-	stringstream	channels;
+	(void)msg;
+	// Channel			*ch;
+	// ChMember		*me;
+	// stringstream	channels;
 
-	if (msg.params.size() == 0) {
-		_CMD_needarg(msg);
-		return ;
-	}
-	channels.str(msg.params[0]);
-	for (string channel; getline(channels, channel, ',');) {
-		if ((ch = _me._server.getChannelByName(channel)) == NULL) {
-			Instruction	&res = newInstruction();
-			res.opr = SEND;
-			res.msg.command = "403";
-			res.msg.params.push_back(_me.nickname);
-			res.msg.params.push_back(channel);
-			res.msg.trailing = "No such channel";
-			continue ;
-		}
-		if ((me = _me._server.getMemberByName(*ch, _me.nickname)) == NULL) {
-			Instruction	&res = newInstruction();
-			res.opr = SEND;
-			res.msg.command = "442";
-			res.msg.params.push_back(_me.nickname);
-			res.msg.params.push_back(channel);
-			res.msg.trailing = "You're not on that channel";
-			continue ;
-		}
-		{
-			Instruction	&res = newInstruction();
-			res.opr = EMIT;
-			res.msg.command = "PART";
-			res.msg.prefix.nick = _me.nickname;
-			res.msg.params.push_back(channel);
-			for (std::vector<ChMember>::size_type i = 0; i < ch->members.size(); i++)
-				res.clients.push_back(ch->members[i].client);
-		}
-		{
-			Instruction	&res = newInstruction();
-			res.opr = SEND;
-			res.msg.command = "PART";
-			res.msg.prefix.nick = _me.nickname;
-			res.msg.params.push_back(channel);
-			res.msg.trailing = msg.trailing;
-		}
-		_me._server.leave_ch(_me, *ch);
-	}
+	// if (msg.params.size() == 0) {
+	// 	_CMD_needarg(msg);
+	// 	return ;
+	// }
+	// channels.str(msg.params[0]);
+	// for (string channel; getline(channels, channel, ',');) {
+	// 	if ((ch = _me._server.getChannelByName(channel)) == NULL) {
+	// 		Instruction	&res = newInstruction();
+	// 		res.opr = SEND;
+	// 		res.msg.command = "403";
+	// 		res.msg.params.push_back(_me.nickname);
+	// 		res.msg.params.push_back(channel);
+	// 		res.msg.trailing = "No such channel";
+	// 		continue ;
+	// 	}
+	// 	if ((me = _me._server.getMemberByName(*ch, _me.nickname)) == NULL) {
+	// 		Instruction	&res = newInstruction();
+	// 		res.opr = SEND;
+	// 		res.msg.command = "442";
+	// 		res.msg.params.push_back(_me.nickname);
+	// 		res.msg.params.push_back(channel);
+	// 		res.msg.trailing = "You're not on that channel";
+	// 		continue ;
+	// 	}
+	// 	{
+	// 		Instruction	&res = newInstruction();
+	// 		res.opr = EMIT;
+	// 		res.msg.command = "PART";
+	// 		res.msg.prefix.nick = _me.nickname;
+	// 		res.msg.params.push_back(channel);
+	// 		for (std::vector<ChMember>::size_type i = 0; i < ch->members.size(); i++)
+	// 			res.clients.push_back(ch->members[i].client);
+	// 	}
+	// 	{
+	// 		Instruction	&res = newInstruction();
+	// 		res.opr = SEND;
+	// 		res.msg.command = "PART";
+	// 		res.msg.prefix.nick = _me.nickname;
+	// 		res.msg.params.push_back(channel);
+	// 		res.msg.trailing = msg.trailing;
+	// 	}
+	// 	_me._server.leave_ch(_me, *ch);
+	// }
 }
 
 int Evaluator::_evalOne(std::list<Message> &msgs) 

@@ -1,6 +1,0 @@
-CompileFlags:
-    Add:
-    - -Wc99-designator
-    - -std=c++98
-    - -pedantic
-    - -I../inc

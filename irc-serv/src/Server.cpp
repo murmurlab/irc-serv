@@ -16,38 +16,6 @@
 #include <sys/fcntl.h>
 #include <sys/poll.h>
 
-// static int	sd = 0;
-// int					sd;
-// int					csd;
-
-// static void	server_sigint(int sig) {
-// 	(void)sig;
-// 	cout << "server_sigint()" << endl;
-// 	// close(sd);
-// 	// close(csd);
-// 	std::exit(0);
-// }
-
-static void	*stdin_loop(void *csd) {
-	string line;
-	
-	while (1) {
-		// cout << "> ";
-		getline(std::cin, line);
-		line += "\r\n";
-		// cout << "readed: " << line << endl;
-		write(*(int *)csd, line.c_str(), line.length());
-	}
-}
-
-static void	test_input(int csd) {
-	pthread_t th1;
-	int *a = new int(csd);
-	pthread_create(&th1, NULL, stdin_loop, a);
-	// cout << "join: " << endl;
-	// pthread_join(th1, NULL);
-}
-
 void	Server::_listen(in_addr_t host, in_port_t port) {
 	// const static size_t P_IP =	getprotobyname("ip")->p_proto; // use tcp
 	struct pollfd		new_pollfd;
@@ -111,7 +79,6 @@ void	Server::_add_accept() {
 	// 	perror("setsockopt(): ");
 	cout	<< "[LISTENER] " << "POLLRDNORM " 
 			<< inet_ntoa(addr.sin_addr) << endl;
-	test_input(desc);
 	new_pollfd.fd = desc;
 	new_pollfd.events = POLLRDNORM | POLLHUP;
 	_accepts.push_back(new Client(desc, addr, *this));
@@ -161,7 +128,17 @@ bool	Server::authorize(string const &pass) {
 }
 
 void	Server::leave_ch(Client &client, Channel &ch) {
-	// list of channels members
+	// emit part message
+	// for (std::vector<ChMember>::size_type i = 0; i < ch.members.size(); i++) {
+	// 	Instruction	&res = client._evaluator.newInstruction();
+	// 	res.opr = EMIT;
+	// 	res.msg.command = "PART";
+	// 	res.msg.prefix.nick = client.nickname;
+	// 	res.msg.params.push_back(ch.name);
+	// 	res.clients.push_back(ch.members[i].client);
+	// } // arstarst
+	// _resolveOne(client);
+
 	for (std::vector<Channel *>::size_type i = 0; i < client.chs.size(); i++) {
 		if (client.chs[i] == &ch) {
 			client.chs.erase(client.chs.begin() + i);
